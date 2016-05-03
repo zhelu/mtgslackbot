@@ -1,0 +1,85 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = "lu.zhe.mtgslackbot.Runner"
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.0'
+}
+
+task getCards(dependsOn: 'checkVersion') << {
+  println "getting card data..."
+  def resourcePath = new File("src/main/resources/lu/zhe/mtgslackbot");
+  if (!resourcePath.exists()) {
+    println "creating resource directories"
+    resourcePath.mkdirs()
+  }
+  def files = ["version.json",
+               "AllCards-x.json",
+               "SetList.json"]
+  files.each({
+    ant.get(src: "http://mtgjson.com/json/${it}",
+            dest: "src/main/resources/lu/zhe/mtgslackbot/${it}",
+            httpusecaches: "false")
+  })
+}
+
+task buildResources(dependsOn: 'getCards', type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'lu.zhe.mtgslackbot.Resources'
+}
+
+task cleanResources(type: Delete) {
+  delete fileTree("src/main/resources/lu/zhe/mtgslackbot") {
+    include "*.json"
+  }
+}
+
+task checkVersion << {
+  getCards.enabled = false
+  println "Starting version check..."
+  def versionFile = new File("src/main/resources/lu/zhe/mtgslackbot/version.json");
+  if (versionFile.exists()) {
+    println "Checking current version against latest..."
+    String oldVersion =
+        new File('src/main/resources/lu/zhe/mtgslackbot/version.json').getText('UTF-8')
+    String newVersion = "http://mtgjson.com/json/version.json".toURL().getText(
+        useCaches: false,
+        requestProperties: ['User-Agent': 'mtgslackbot'])
+    oldVersion = oldVersion.substring(1, oldVersion.length() - 1);
+    newVersion = newVersion.substring(1, newVersion.length() - 1);
+    String[] oldParts = oldVersion.split('\\.')
+    String[] newParts = newVersion.split('\\.')
+    boolean mismatch = false
+    for (int i = 0; i < Math.min(oldParts.length, newParts.length); ++i) {
+      if (Integer.parseInt(oldParts[i]) < Integer.parseInt(newParts[i])) {
+        mismatch = true;
+        getCards.enabled = true;
+        println "newer version found..."
+        break;
+      }
+    }
+    if (!mismatch && (oldParts.length < newParts.length)) {
+      println "newer version found..."
+      getCards.enabled = oldParts.length < newParts.length;
+    }
+  } else {
+    println "no current version..."
+    getCards.enabled = true
+  }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+  compile 'com.google.code.findbugs:jsr305:2.0.3'
+  compile 'com.google.guava:guava:16.0.1'
+  compile 'com.google.auto.value:auto-value:1.0-rc1'
+  compile 'com.google.code.gson:gson:2.3'
+
+  compile group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.0'
+
+  testCompile 'junit:junit:4.11'
+}
