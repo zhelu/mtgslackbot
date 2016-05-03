@@ -7,7 +7,7 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.0'
 }
 
-task getCards(dependsOn: 'checkVersion') << {
+task getData(dependsOn: 'checkVersion') << {
   println "getting card data..."
   def resourcePath = new File("src/main/resources/lu/zhe/mtgslackbot");
   if (!resourcePath.exists()) {
@@ -24,20 +24,32 @@ task getCards(dependsOn: 'checkVersion') << {
   })
 }
 
-task buildResources(dependsOn: 'getCards', type: JavaExec) {
+task getRules << {
+  String newVersion =
+      "http://magic.wizards.com/en/gameinfo/gameplay/formats/comprehensiverules".toURL().getText(
+          useCaches: false,
+          requestProperties: ['User-Agent': 'mtgslackbot'])
+      .replaceAll("(?s).*(http://media.wizards.com/\\d+/docs/MagicCompRules_\\d+.txt).*", "\$1");
+  println "Getting new file: " + newVersion
+  ant.get(src: "$newVersion",
+          dest: "src/main/resources/lu/zhe/mtgslackbot/rules.txt",
+          httpusecaches: "false")
+}
+
+task buildResources(dependsOn: 'getData', type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   main = 'lu.zhe.mtgslackbot.Resources'
 }
 
 task cleanResources(type: Delete) {
   delete fileTree("src/main/resources/lu/zhe/mtgslackbot") {
-    include "*.json"
+    includes = ["*.json", "*.txt"]
   }
 }
 
 task checkVersion << {
-  getCards.enabled = false
-  println "Starting version check..."
+  getData.enabled = false
+  println "Starting version check for cards and sets..."
   def versionFile = new File("src/main/resources/lu/zhe/mtgslackbot/version.json");
   if (versionFile.exists()) {
     println "Checking current version against latest..."
@@ -54,18 +66,18 @@ task checkVersion << {
     for (int i = 0; i < Math.min(oldParts.length, newParts.length); ++i) {
       if (Integer.parseInt(oldParts[i]) < Integer.parseInt(newParts[i])) {
         mismatch = true;
-        getCards.enabled = true;
+        getData.enabled = true;
         println "newer version found..."
         break;
       }
     }
     if (!mismatch && (oldParts.length < newParts.length)) {
       println "newer version found..."
-      getCards.enabled = oldParts.length < newParts.length;
+      getData.enabled = oldParts.length < newParts.length;
     }
   } else {
     println "no current version..."
-    getCards.enabled = true
+    getData.enabled = true
   }
 }
 

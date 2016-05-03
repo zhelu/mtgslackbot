@@ -30,6 +30,7 @@ public class DataSources {
                                                   Format.COMMANDER);
   private final Map<String, Card> allCards;
   private final Map<String, String> allSets;
+  private final Map<String, String> allRules;
 
   @SuppressWarnings("unchecked")
   public DataSources() {
@@ -57,6 +58,18 @@ public class DataSources {
       throw new RuntimeException("Error reading serialized set data", e);
     }
     System.out.println("finished loading set data...");
+    System.out.println("loading rule data...");
+    try (ObjectInputStream ois =
+        new ObjectInputStream(
+            DataSources.class.getClassLoader().getResourceAsStream(
+                "lu/zhe/mtgslackbot/Rules.ser"))) {
+      long start = System.currentTimeMillis();
+      allRules = (Map<String, String>) ois.readObject();
+      System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
+    } catch (IOException | ClassNotFoundException e) {
+      throw new RuntimeException("Error reading serialized rule data", e);
+    }
+    System.out.println("finished loading rule data...");
   }
 
   /**

@@ -6,10 +6,12 @@ import java.util.Map;
 
 import lu.zhe.mtgslackbot.card.Card;
 import lu.zhe.mtgslackbot.card.ParseUtils;
+import lu.zhe.mtgslackbot.rule.RuleUtils;
 import lu.zhe.mtgslackbot.set.SetUtils;
 
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.util.Scanner;
 
 /**
  * Class that builds serialized data structures from JSON inputs.
@@ -18,6 +20,7 @@ public class Resources {
   private Resources() {
     Map<String, Card> allCards;
     Map<String, String> allSets;
+    Map<String, String> allRules;
     try {
       long start = System.currentTimeMillis();
       InputStream is =
@@ -53,6 +56,24 @@ public class Resources {
       oos.writeObject(allSets);
     } catch (IOException e) {
       throw new RuntimeException("Couldn't serialize set data", e);
+    }
+    try {
+      long start = System.currentTimeMillis();
+      Scanner sc =
+          new Scanner(Resources.class.getClassLoader().getResourceAsStream(
+              "lu/zhe/mtgslackbot/rules.txt"));
+      allRules = RuleUtils.parseRules(sc);
+      System.out.println("Rule entries: " + allRules.size());
+      System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
+    } catch (IOException e) {
+      throw new RuntimeException("Error parsing comprehensive rules", e);
+    }
+    try (ObjectOutputStream oos =
+        new ObjectOutputStream(
+            new FileOutputStream("src/main/resources/lu/zhe/mtgslackbot/Rules.ser"))) {
+      oos.writeObject(allRules);
+    } catch (IOException e) {
+      throw new RuntimeException("Couldn't serialize rule data", e);
     }
   }
 
