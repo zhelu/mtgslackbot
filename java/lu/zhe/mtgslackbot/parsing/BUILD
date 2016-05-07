@@ -5,6 +5,7 @@ java_library(
     srcs = glob(["*.java"]),
     deps = [
         "//:auto",
+        "//java/lu/zhe/mtgslackbot/card:card",
         "@com_google_guava_guava//jar",
     ],
 )

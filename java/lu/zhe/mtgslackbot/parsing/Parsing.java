@@ -1,12 +1,15 @@
 package lu.zhe.mtgslackbot.parsing;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Predicate;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import lu.zhe.mtgslackbot.card.Card;
 
 /**
  * Class that performs input parsing.
@@ -29,17 +32,14 @@ public class Parsing {
   private Parsing() {}
 
   /**
-   * Return a {@link Matcher} for the input.
+   * Return a {@link ParsedInput} for the input.
    */
   public static ParsedInput getParsedInput(String input) {
     System.out.println(input);
     Matcher m = TOKENIZER.matcher(input);
-    System.out.println("matches: " + m.matches());
     try {
       Command command = Command.valueOf(m.group("command").toUpperCase());
       String args = m.group("args");
-      System.out.println("command: " + command);
-      System.out.println("args: " + args);
       switch (command) {
         case CARD:
           // fall through intended
@@ -52,7 +52,7 @@ public class Parsing {
         case MOMIR:
           // fall through intended
         case HELP:
-          return ParsedInput.create(command, m.group("args"), ImmutableList.<Object>of());
+          return ParsedInput.create(command, m.group("args"), ImmutableList.<Predicate<Card>>of());
         case SEARCH:
           // fall through intended
         case COUNT:
@@ -65,13 +65,20 @@ public class Parsing {
             System.out.println("val: " + argMatcher.group("val"));
           }
           return null;
+        default:
+          throw new IllegalArgumentException("Unprocessed command: " + command);
       }
     } catch (IllegalStateException e) {
       throw new IllegalArgumentException("Invalid input", e);
     }
+  }
+
+  /** Creates a filter from the predicate group. */
+  private Predicate<Card> parseFilter(String var, String op, String val) {
     return null;
   }
 
+  /** Base commands. */
   public enum Command {
     CARD,
     SEARCH,
@@ -84,16 +91,17 @@ public class Parsing {
     HELP;
   }
 
+  /** Representation of parsed input. */
   @AutoValue
   public static abstract class ParsedInput {
     public abstract Command command();
 
     public abstract String arg();
 
-    public abstract List<Object> predicates();
+    public abstract List<Predicate<Card>> filters();
 
-    public static ParsedInput create(Command command, String arg, List<Object> predicates) {
-      return new AutoValue_Parsing_ParsedInput(command, arg, predicates);
+    public static ParsedInput create(Command command, String arg, List<Predicate<Card>> filters) {
+      return new AutoValue_Parsing_ParsedInput(command, arg, filters);
     }
   }
 }

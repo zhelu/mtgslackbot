@@ -34,6 +34,7 @@ java_library(
     resources = glob(["res/*.ser"]),
     deps = [
         ":data_sources",
+        "//java/lu/zhe/mtgslackbot/parsing:parsing",
     ],
 )
 
