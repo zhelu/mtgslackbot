@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class SetUtils {
   private SetUtils() {
-    // Disallow initiatilzation.
+    // Disallow instantiation
   }
 
   public static Map<String, String> parseSets(InputStream is) throws IOException {

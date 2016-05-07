@@ -15,6 +15,9 @@ import java.util.regex.Matcher;
 public class RuleUtils {
   private static final Pattern RULE_PATTERN =
       Pattern.compile("(?<p>\\d+\\.(\\d+(\\.|[a-z]))?) (?<rule>.*)");
+
+  private RuleUtils() {}
+
   /**
    * Reads a map from key words or paragraphs to text from the input {@link Scanner}.
    */

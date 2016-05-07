@@ -26,6 +26,8 @@ public class Parsing {
           + "(?<op>" + PIPE_JOINER.join(OPS) + ")"
           + "(?<quote>\"?)(?<val>.+)\\k<quote>)");
 
+  private Parsing() {}
+
   /**
    * Return a {@link Matcher} for the input.
    */
