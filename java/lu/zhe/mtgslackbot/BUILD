@@ -4,10 +4,10 @@ java_library(
     name = "resources",
     srcs = ["Resources.java"],
     deps = [
-      "@com_google_guava_guava//jar",
-      "//java/lu/zhe/mtgslackbot/card:card",
-      "//java/lu/zhe/mtgslackbot/rule:rule",
-      "//java/lu/zhe/mtgslackbot/set:set",
+        "@com_google_guava_guava//jar",
+        "//java/lu/zhe/mtgslackbot/card:card",
+        "//java/lu/zhe/mtgslackbot/rule:rule",
+        "//java/lu/zhe/mtgslackbot/set:set",
     ],
 )
 
@@ -15,8 +15,8 @@ java_library(
     name = "data_sources",
     srcs = ["DataSources.java"],
     deps = [
-      "@com_google_guava_guava//jar",
-      "//java/lu/zhe/mtgslackbot/card:card",
+        "@com_google_guava_guava//jar",
+        "//java/lu/zhe/mtgslackbot/card:card",
     ],
 )
 
@@ -31,8 +31,16 @@ java_binary(
 java_library(
     name = "runner",
     srcs = ["Runner.java"],
-    resources = glob(["res/*.Ser"]),
+    resources = glob(["res/*.ser"]),
     deps = [
-      ":data_sources",
+        ":data_sources",
+    ],
+)
+
+java_binary(
+    name = "Runner",
+    main_class = "lu.zhe.mtgslackbot.Runner",
+    runtime_deps = [
+        ":runner",
     ],
 )

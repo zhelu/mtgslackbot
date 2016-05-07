@@ -12,9 +12,13 @@ import java.util.Map;
  * Main class that handles IO.
  */
 public class Runner {
+  private final DataSources dataSources;
+
   private Runner() {
+    this.dataSources = new DataSources();
   }
 
   public static void main(String[] args) {
+    Runner runner = new Runner();
   }
 }
