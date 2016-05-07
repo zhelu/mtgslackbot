@@ -2,8 +2,14 @@
 
 ## Building
 
+### Build serialied resources
+
 ```shell
-gradle :getRules
-gradle :buildResources
-gradle build
+bazel build java/lu/zhe/mtgslackbot:Resources $absolute_path_to_java/lu/zhe/mtgslackbot/res$
+```
+
+### Build runner
+
+```shell
+bazel run java/lu/zhe/mtgslackbot:Runner
 ```
