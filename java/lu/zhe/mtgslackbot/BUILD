@@ -17,6 +17,7 @@ java_library(
     deps = [
         "@com_google_guava_guava//jar",
         "//java/lu/zhe/mtgslackbot/card:card",
+        "//java/lu/zhe/mtgslackbot/parsing:parsing",
     ],
 )
 

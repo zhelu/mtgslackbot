@@ -1,19 +1,26 @@
 package lu.zhe.mtgslackbot;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import lu.zhe.mtgslackbot.card.Card;
 import lu.zhe.mtgslackbot.card.CardUtils;
 import lu.zhe.mtgslackbot.card.Format;
 import lu.zhe.mtgslackbot.card.Layout;
 import lu.zhe.mtgslackbot.card.Legality;
+import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 
 /**
  * Wrapper class that contains set and card data.
@@ -21,6 +28,15 @@ import lu.zhe.mtgslackbot.card.Legality;
  * <p>Loads data from resources.
  */
 public class DataSources {
+  private static final SecureRandom random = new SecureRandom();
+
+  private static final Joiner SEMICOLON_JOINER = Joiner.on("; ");
+  private static final Function<Card, String> NAME_GETTER = new Function<Card, String>() {
+    @Override
+    public String apply(Card card) {
+      return card.name();
+    }
+  };
   private static final Joiner COMMA_JOINER = Joiner.on(",");
   private static final List<Format> FORMATS = ImmutableList.of(
                                                   Format.STANDARD,
@@ -31,9 +47,11 @@ public class DataSources {
   private final Map<String, Card> allCards;
   private final Map<String, String> allSets;
   private final Map<String, String> allRules;
+  private final boolean useSlackSymbols;
 
   @SuppressWarnings("unchecked")
-  public DataSources() {
+  public DataSources(boolean useSlackSymbols) {
+    this.useSlackSymbols = useSlackSymbols;
     System.out.println("loading card data...");
     try (ObjectInputStream ois =
         new ObjectInputStream(
@@ -70,6 +88,102 @@ public class DataSources {
       throw new RuntimeException("Error reading serialized rule data", e);
     }
     System.out.println("finished loading rule data...");
+  }
+
+  /** Get the display string for the parsed input. */
+  public String processInput(ParsedInput input) {
+    String arg = input.arg();
+    Predicate<Card> predicate = input.filter();
+    switch (input.command()) {
+      case CARD:
+        {
+          Card card = allCards.get(arg);
+          if (card != null) {
+            return getDisplayString(card);
+          }
+          List<Card> prefixMatch = new ArrayList<>();
+          List<Card> anyMatch = new ArrayList<>();
+          for (Entry<String, Card> candidate : allCards.entrySet()) {
+            if (candidate.getKey().startsWith(arg)) {
+              prefixMatch.add(candidate.getValue());
+            } else if (candidate.getKey().contains(arg)) {
+              anyMatch.add(candidate.getValue());
+            }
+          }
+          if (!prefixMatch.isEmpty()) {
+            return getTopList(prefixMatch);
+          }
+          if (!anyMatch.isEmpty()) {
+            return getTopList(anyMatch);
+          }
+          return "No matches found";
+        }
+      case SEARCH:
+        {
+          List<Card> matches = new ArrayList<>();
+          for (Card candidate : allCards.values()) {
+            if (predicate.apply(candidate)) {
+              matches.add(candidate);
+            }
+          }
+          if (!matches.isEmpty()) {
+            return getTopList(matches);
+          }
+          return "No matches found";
+        }
+      case COUNT:
+        {
+          int count = 0;
+          for (Card candidate : allCards.values()) {
+            if (predicate.apply(candidate)) {
+              ++count;
+            }
+          }
+          return count + " matches";
+        }
+      case RANDOM:
+        {
+          List<Card> matches = new ArrayList<>();
+          for (Card candidate : allCards.values()) {
+            if (predicate.apply(candidate)) {
+              matches.add(candidate);
+            }
+          }
+          if (!matches.isEmpty()) {
+            Card c = matches.get(random.nextInt(matches.size()));
+            return getDisplayString(c);
+          }
+          return "No matches found";
+        }
+      case SET:
+        {
+          String set = allSets.get(input.arg());
+          return set == null ? "No set found" : set;
+        }
+      case JHOIRA:
+        return "not implemented";
+      case MOJOS:
+        return "not implemented";
+      case MOMIR:
+        return "not implemented";
+      case HELP:
+        return "not implemented";
+      default:
+        return "not implemented";
+    }
+  }
+
+  private static String getTopList(List<Card> cards) {
+    int extras = 0;
+    if (cards.size() > 10) {
+      extras = cards.size() - 10;
+      cards = cards.subList(0, 10);
+    }
+    String result = SEMICOLON_JOINER.join(Lists.transform(cards, NAME_GETTER));
+    if (extras == 0) {
+      return result;
+    }
+    return result + " plus " + extras + " others";
   }
 
   /**
@@ -141,7 +255,7 @@ public class DataSources {
         .append(" ")
         .append(COMMA_JOINER.join(card.printings()))
         .append("\n")
-        .append(card.oracleText());
+        .append(substituteSymbols(card.oracleText()));
     return builder.toString();
   }
 
@@ -173,7 +287,7 @@ public class DataSources {
         .append(" ")
         .append(COMMA_JOINER.join(front.printings()))
         .append("\n")
-        .append(front.oracleText())
+        .append(substituteSymbols(front.oracleText()))
         .append("\n")
         .append(flipsOrTransforms)
         .append(" INTO:\n");
@@ -189,7 +303,7 @@ public class DataSources {
     }
     builder
         .append("\n")
-        .append(back.oracleText());
+        .append(substituteSymbols(back.oracleText()));
     return builder.toString();
   }
 
@@ -221,7 +335,7 @@ public class DataSources {
     }
     builder
         .append("\n")
-        .append(left.oracleText())
+        .append(substituteSymbols(left.oracleText()))
         .append("\n")
         .append(right.name())
         .append(" ")
@@ -236,7 +350,7 @@ public class DataSources {
     }
     builder
         .append("\n")
-        .append(right.oracleText());
+        .append(substituteSymbols(right.oracleText()));
     return builder.toString();
   }
 
@@ -257,5 +371,63 @@ public class DataSources {
       throw new NoSuchElementException("No entry for " + keywordOrParagraph);
     }
     return entry;
+  }
+
+  private String substituteSymbols(String text) {
+    if (useSlackSymbols) {
+      return text
+          .replaceAll("\\{2/B\\}", ":2b:")
+          .replaceAll("\\{2/G\\}", ":2g:")
+          .replaceAll("\\{2/R\\}", ":2r:")
+          .replaceAll("\\{2/U\\}", ":2u:")
+          .replaceAll("\\{2/W\\}", ":2w:")
+          .replaceAll("\\{B/G\\}", ":bg:")
+          .replaceAll("\\{B/P\\}", ":bp:")
+          .replaceAll("\\{B/R\\}", ":br:")
+          .replaceAll("\\{C\\}", ":c:")
+          .replaceAll("\\{G\\}", ":g:")
+          .replaceAll("\\{G/P\\}", ":gp:")
+          .replaceAll("\\{G/U\\}", ":gu:")
+          .replaceAll("\\{G/W\\}", ":gw:")
+          .replaceAll("\\{Q\\}", ":q:")
+          .replaceAll("\\{R\\}", ":r:")
+          .replaceAll("\\{R/G\\}", ":rg:")
+          .replaceAll("\\{R/P\\}", ":rp:")
+          .replaceAll("\\{R/W\\}", ":rw:")
+          .replaceAll("\\{S\\}", ":s:")
+          .replaceAll("\\{T\\}", ":t:")
+          .replaceAll("\\{U\\}", ":u:")
+          .replaceAll("\\{U/P\\}", ":u-p:")
+          .replaceAll("\\{U/B\\}", ":ub:")
+          .replaceAll("\\{U/R\\}", ":ur:")
+          .replaceAll("\\{W/U\\}", ":wu:")
+          .replaceAll("\\{W/P\\}", ":wp:")
+          .replaceAll("\\{W\\}", ":w:")
+          .replaceAll("\\{0\\}", ":0:")
+          .replaceAll("\\{1\\}", ":1:")
+          .replaceAll("\\{2\\}", ":2:")
+          .replaceAll("\\{3\\}", ":3:")
+          .replaceAll("\\{4\\}", ":4:")
+          .replaceAll("\\{5\\}", ":5:")
+          .replaceAll("\\{6\\}", ":6:")
+          .replaceAll("\\{7\\}", ":7:")
+          .replaceAll("\\{8\\}", ":8:")
+          .replaceAll("\\{9\\}", ":9:")
+          .replaceAll("\\{10\\}", ":10:")
+          .replaceAll("\\{11\\}", ":11:")
+          .replaceAll("\\{12\\}", ":12:")
+          .replaceAll("\\{13\\}", ":13:")
+          .replaceAll("\\{14\\}", ":14:")
+          .replaceAll("\\{15\\}", ":15:")
+          .replaceAll("\\{16\\}", ":16:")
+          .replaceAll("\\{17\\}", ":17:")
+          .replaceAll("\\{18\\}", ":18:")
+          .replaceAll("\\{19\\}", ":19:")
+          .replaceAll("\\{20\\}", ":20:")
+          .replaceAll("\\{X\\}", ":xx:")
+          .replaceAll("\\{W/B\\}", ":wb:")
+          .replaceAll("\\{B\\}", ":bk:");
+    }
+    return text;
   }
 }

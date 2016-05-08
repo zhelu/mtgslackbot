@@ -40,7 +40,7 @@ public abstract class Card implements Serializable {
   public abstract int cmc();
 
   /** The colors of this card. */
-  public abstract Set<Color> color();
+  public abstract Set<Color> colors();
 
   /** The color identity of this card for purposes of commander. */
   public abstract Set<Color> colorIdentity();
@@ -49,7 +49,7 @@ public abstract class Card implements Serializable {
   public abstract String type();
 
   /** The super types. */
-  public abstract Set<String> superTypes();
+  public abstract Set<String> supertypes();
 
   /** The types of the this card. */
   public abstract Set<String> types();

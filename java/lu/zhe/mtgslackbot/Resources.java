@@ -32,7 +32,7 @@ public class Resources {
       long start = System.currentTimeMillis();
       InputStream is =
           new URL("http://mtgjson.com/json/AllCards-x.json").openStream();
-      allCards = ParseUtils.parseCards(is, true);
+      allCards = ParseUtils.parseCards(is);
       System.out.println("Cards processed: " + allCards.size());
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
     } catch (IOException e) {

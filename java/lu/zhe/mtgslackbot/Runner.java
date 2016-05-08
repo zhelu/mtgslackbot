@@ -16,11 +16,24 @@ import lu.zhe.mtgslackbot.parsing.Parsing;
 public class Runner {
   private final DataSources dataSources;
 
-  private Runner() {
-    this.dataSources = new DataSources();
+  private Runner(boolean debug, boolean slack) {
+    this.dataSources = new DataSources(slack);
   }
 
   public static void main(String[] args) {
-    Runner runner = new Runner();
+    boolean slack = false;
+    boolean debug = false;
+    for (String arg : args) {
+      switch (arg) {
+        case "slack":
+          slack = true;
+          continue;
+        case "debug":
+          debug = true;
+          continue;
+        default:
+      }
+    }
+    Runner runner = new Runner(debug, slack);
   }
 }

@@ -23,7 +23,7 @@ public class ParseUtils {
   /**
    * Parses a mapping of {@link Card} objects mapped to a canonical name.
    */
-  public static Map<String, Card> parseCards(InputStream is, boolean useSlackSymbols)
+  public static Map<String, Card> parseCards(InputStream is)
       throws IOException {
     ImmutableMap.Builder<String, Card> allCards = ImmutableMap.builder();
     JsonReader reader = new JsonReader(new InputStreamReader(is, "UTF-8"));
@@ -32,7 +32,7 @@ public class ParseUtils {
       String name = reader.nextName().toLowerCase();
       String canonicalName = CardUtils.canonicalizeName(name);
       try {
-        Card card = readCard(reader, useSlackSymbols);
+        Card card = readCard(reader);
         if (card != null) {
           allCards.put(canonicalName, card);
         }
@@ -44,7 +44,7 @@ public class ParseUtils {
     return allCards.build();
   }
 
-  private static Card readCard(JsonReader reader, boolean useSlackSymbols) throws IOException {
+  private static Card readCard(JsonReader reader) throws IOException {
     String name = null;
     String layout = null;
     List<String> sets = ImmutableList.of();
@@ -54,7 +54,7 @@ public class ParseUtils {
     Set<Color> colors = ImmutableSet.of();
     Set<Color> colorIdentity = ImmutableSet.of();
     String typeLine = "";
-    Set<String> superTypes = ImmutableSet.of();
+    Set<String> supertypes = ImmutableSet.of();
     Set<String> types = ImmutableSet.of();
     Set<String> subtypes = ImmutableSet.of();
     String oracleText = "";
@@ -96,11 +96,20 @@ public class ParseUtils {
         case "type":
           typeLine = reader.nextString();
           break;
+        case "types":
+          types = parseStringArray(reader);
+          break;
+        case "supertypes":
+          supertypes = parseStringArray(reader);
+          break;
+        case "subtypes":
+          subtypes = parseStringArray(reader);
+          break;
         case "manaCost":
-          manaCost = substituteSymbols(reader.nextString(), useSlackSymbols);
+          manaCost = reader.nextString();
           break;
         case "text":
-          oracleText = substituteSymbols(reader.nextString(), useSlackSymbols);
+          oracleText = reader.nextString();
           break;
         case "power":
           power = reader.nextString();
@@ -142,7 +151,7 @@ public class ParseUtils {
           colors,
           colorIdentity,
           typeLine,
-          superTypes,
+          supertypes,
           types,
           subtypes,
           power,
@@ -181,7 +190,7 @@ public class ParseUtils {
     ImmutableSet.Builder<String> strings = ImmutableSet.builder();
     reader.beginArray();
     while (reader.hasNext()) {
-      strings.add(reader.nextString());
+      strings.add(reader.nextString().toLowerCase());
     }
     reader.endArray();
     return strings.build();
@@ -228,65 +237,6 @@ public class ParseUtils {
     }
     reader.endArray();
     return rulings.build();
-  }
-
-  private static String substituteSymbols(String text, boolean useSlackSymbols) {
-    if (useSlackSymbols) {
-      return text
-          .replaceAll("\\{2/B\\}", ":2b:")
-          .replaceAll("\\{2/G\\}", ":2g:")
-          .replaceAll("\\{2/R\\}", ":2r:")
-          .replaceAll("\\{2/U\\}", ":2u:")
-          .replaceAll("\\{2/W\\}", ":2w:")
-          .replaceAll("\\{B/G\\}", ":bg:")
-          .replaceAll("\\{B/P\\}", ":bp:")
-          .replaceAll("\\{B/R\\}", ":br:")
-          .replaceAll("\\{C\\}", ":c:")
-          .replaceAll("\\{G\\}", ":g:")
-          .replaceAll("\\{G/P\\}", ":gp:")
-          .replaceAll("\\{G/U\\}", ":gu:")
-          .replaceAll("\\{G/W\\}", ":gw:")
-          .replaceAll("\\{Q\\}", ":q:")
-          .replaceAll("\\{R\\}", ":r:")
-          .replaceAll("\\{R/G\\}", ":rg:")
-          .replaceAll("\\{R/P\\}", ":rp:")
-          .replaceAll("\\{R/W\\}", ":rw:")
-          .replaceAll("\\{S\\}", ":s:")
-          .replaceAll("\\{T\\}", ":t:")
-          .replaceAll("\\{U\\}", ":u:")
-          .replaceAll("\\{U/P\\}", ":u-p:")
-          .replaceAll("\\{U/B\\}", ":ub:")
-          .replaceAll("\\{U/R\\}", ":ur:")
-          .replaceAll("\\{W/U\\}", ":wu:")
-          .replaceAll("\\{W/P\\}", ":wp:")
-          .replaceAll("\\{W\\}", ":w:")
-          .replaceAll("\\{0\\}", ":0:")
-          .replaceAll("\\{1\\}", ":1:")
-          .replaceAll("\\{2\\}", ":2:")
-          .replaceAll("\\{3\\}", ":3:")
-          .replaceAll("\\{4\\}", ":4:")
-          .replaceAll("\\{5\\}", ":5:")
-          .replaceAll("\\{6\\}", ":6:")
-          .replaceAll("\\{7\\}", ":7:")
-          .replaceAll("\\{8\\}", ":8:")
-          .replaceAll("\\{9\\}", ":9:")
-          .replaceAll("\\{10\\}", ":10:")
-          .replaceAll("\\{11\\}", ":11:")
-          .replaceAll("\\{12\\}", ":12:")
-          .replaceAll("\\{13\\}", ":13:")
-          .replaceAll("\\{14\\}", ":14:")
-          .replaceAll("\\{15\\}", ":15:")
-          .replaceAll("\\{16\\}", ":16:")
-          .replaceAll("\\{17\\}", ":17:")
-          .replaceAll("\\{18\\}", ":18:")
-          .replaceAll("\\{19\\}", ":19:")
-          .replaceAll("\\{20\\}", ":20:")
-          .replaceAll("\\{X\\}", ":xx:")
-          .replaceAll("\\{W/B\\}", ":wb:")
-          .replaceAll("\\{B\\}", ":bk:");
-    } else {
-      return text;
-    }
   }
 
   private static Map<Format, Legality> parseLegalities(JsonReader reader) throws IOException {
