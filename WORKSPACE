@@ -42,3 +42,12 @@ bind(
     name = "auto_value-jar",
     actual = "@auto_value//jar"
 )
+
+git_repository(
+    name = "io_bazel_rules_appengine",
+    remote = "https://github.com/bazelbuild/rules_appengine.git",
+    tag = "0.0.2",
+)
+
+load("@io_bazel_rules_appengine//appengine:appengine.bzl", "appengine_repositories")
+appengine_repositories()

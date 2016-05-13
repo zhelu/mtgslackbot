@@ -3,6 +3,7 @@ package lu.zhe.mtgslackbot;
 import com.google.common.base.Joiner;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -10,6 +11,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Map;
@@ -93,7 +96,8 @@ public class DataSources {
   /** Get the display string for the parsed input. */
   public String processInput(ParsedInput input) {
     String arg = input.arg();
-    Predicate<Card> predicate = input.filter();
+    List<Predicate<Card>> predicates = input.filters();
+    Predicate<Card> predicate = Predicates.and(predicates);
     switch (input.command()) {
       case CARD:
         {
@@ -109,6 +113,12 @@ public class DataSources {
             } else if (candidate.getKey().contains(arg)) {
               anyMatch.add(candidate.getValue());
             }
+          }
+          if (prefixMatch.size() == 1) {
+            return getDisplayString(prefixMatch.get(0));
+          }
+          if (anyMatch.size() == 1) {
+            return getDisplayString(anyMatch.get(0));
           }
           if (!prefixMatch.isEmpty()) {
             return getTopList(prefixMatch);
@@ -179,6 +189,12 @@ public class DataSources {
       extras = cards.size() - 10;
       cards = cards.subList(0, 10);
     }
+    Collections.sort(cards, new Comparator<Card>() {
+      @Override
+      public int compare(Card c1, Card c2) {
+        return c1.name().compareTo(c2.name());
+      }
+    });
     String result = SEMICOLON_JOINER.join(Lists.transform(cards, NAME_GETTER));
     if (extras == 0) {
       return result;

@@ -1,39 +1,37 @@
 package lu.zhe.mtgslackbot;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.List;
-import java.util.Map;
 
 import lu.zhe.mtgslackbot.parsing.Parsing;
+import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 
 /**
  * Main class that handles IO.
  */
 public class Runner {
+  private static final Joiner JOINER = Joiner.on(" ");
   private final DataSources dataSources;
 
-  private Runner(boolean debug, boolean slack) {
+  private Runner(boolean slack) {
     this.dataSources = new DataSources(slack);
   }
 
-  public static void main(String[] args) {
-    boolean slack = false;
-    boolean debug = false;
-    for (String arg : args) {
-      switch (arg) {
-        case "slack":
-          slack = true;
-          continue;
-        case "debug":
-          debug = true;
-          continue;
-        default:
-      }
+  private String process(String input) {
+    try {
+      ParsedInput parsedInput = Parsing.getParsedInput(input);
+      return dataSources.processInput(parsedInput);
+    } catch (Exception e) {
+      return e.getMessage();
     }
-    Runner runner = new Runner(debug, slack);
+  }
+
+  public static void main(String[] args) {
+    try {
+      String input = JOINER.join(args);
+      Runner runner = new Runner(true);
+      System.out.println(runner.process(input));
+    } catch (Throwable e) {
+      e.printStackTrace();
+    }
   }
 }

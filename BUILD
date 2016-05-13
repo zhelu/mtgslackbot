@@ -4,7 +4,6 @@
 # com.google.guava:guava:16.0.1
 # com.google.code.gson:gson:2.3
 # junit:junit:4.11
-
 java_library(
     name = "com_google_code_findbugs_jsr305",
     visibility = ["//visibility:public"],

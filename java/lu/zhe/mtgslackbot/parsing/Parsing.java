@@ -10,16 +10,18 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lu.zhe.mtgslackbot.card.Card;
+import lu.zhe.mtgslackbot.card.CardUtils;
 import lu.zhe.mtgslackbot.card.Color;
 import lu.zhe.mtgslackbot.card.Layout;
+
+import javax.annotation.Nullable;
 
 /**
  * Class that performs input parsing.
@@ -33,7 +35,10 @@ public class Parsing {
   private static final Joiner PIPE_JOINER = Joiner.on("|");
   private static final Pattern TOKENIZER =
       Pattern.compile(
-          "!mtg\\s+(?<command>" + PIPE_JOINER.join(COMMANDS) + ")\\s+(?<args>.*)");
+          "!mtg\\s(?<command>" + PIPE_JOINER.join(COMMANDS) + ")\\s(?<args>.*)");
+  private static final Pattern WHOLE_PREDICATE =
+      Pattern.compile("([a-z!]+(" + PIPE_JOINER.join(OPS) + ")(\"?)(.*)(\\2)|" +
+         "([a-z!]+(" + PIPE_JOINER.join(OPS) + ")[^ \"]+))");
   private static final Pattern PREDICATE_TOKENIZER =
       Pattern.compile(
           "(?:\\s*(?<var>[a-z!]+)"
@@ -92,6 +97,7 @@ public class Parsing {
   public static ParsedInput getParsedInput(String input) {
     System.out.println(input);
     Matcher m = TOKENIZER.matcher(input);
+    m.find();
     try {
       Command command = Command.valueOf(m.group("command").toUpperCase());
       String args = m.group("args");
@@ -107,26 +113,35 @@ public class Parsing {
         case MOMIR:
           // fall through intended
         case HELP:
-          return ParsedInput.create(command, m.group("args"), null);
+          return ParsedInput.create(
+              command,
+              CardUtils.canonicalizeName(m.group("args")),
+              ImmutableList.<Predicate<Card>>of());
         case SEARCH:
           // fall through intended
         case COUNT:
           // fall through intended
         case RANDOM:
-          Matcher argMatcher = PREDICATE_TOKENIZER.matcher(args);
-          Set<Predicate<Card>> predicates = new HashSet<>();
-          while (argMatcher.find()) {
+          List<Predicate<Card>> predicates = new ArrayList<>();
+          Matcher preds = WHOLE_PREDICATE.matcher(args);
+          while (preds.find()) {
+            Matcher argMatcher = PREDICATE_TOKENIZER.matcher(preds.group());
+            argMatcher.find();
             String var = argMatcher.group("var");
             String op = argMatcher.group("op");
             String val = argMatcher.group("val");
             Function<String, Predicate<Card>> f = PREDICATE_TABLE.get(var, op);
-            predicates.add(f == null ? Predicates.alwaysFalse() : f.apply(val));
+            if (f == null) {
+              throw new IllegalArgumentException("Unprocessed arg: " + var + op + val);
+            }
+            predicates.add(f.apply(val));
           }
-          return ParsedInput.create(command, "", Predicates.and(predicates));
+          return ParsedInput.create(command, "", predicates);
         default:
           throw new IllegalArgumentException("Unprocessed command: " + command);
       }
     } catch (IllegalStateException e) {
+      e.printStackTrace();
       throw new IllegalArgumentException("Invalid input", e);
     }
   }
@@ -161,10 +176,10 @@ public class Parsing {
 
     public abstract String arg();
 
-    public abstract Predicate<Card> filter();
+    public abstract List<Predicate<Card>> filters();
 
-    public static ParsedInput create(Command command, String arg, Predicate<Card> filter) {
-      return new AutoValue_Parsing_ParsedInput(command, arg, filter);
+    public static ParsedInput create(Command command, String arg, List<Predicate<Card>> filters) {
+      return new AutoValue_Parsing_ParsedInput(command, arg, filters);
     }
   }
 
@@ -525,10 +540,10 @@ public class Parsing {
 
   private static Predicate<Card> getTextPredicate(final String regexp) {
     return new Predicate<Card>() {
-      private final Pattern p = Pattern.compile(regexp);
+      private final Pattern p = Pattern.compile(".*" + regexp + ".*");
       @Override
       public boolean apply(Card card) {
-        return p.matcher(card.oracleText().toLowerCase()).matches();
+        return p.matcher(card.oracleText().toLowerCase().replaceAll("\n", "")).matches();
       }
     };
   }

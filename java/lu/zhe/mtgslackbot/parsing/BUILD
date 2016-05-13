@@ -6,6 +6,7 @@ java_library(
     deps = [
         "//:auto",
         "//java/lu/zhe/mtgslackbot/card:card",
+        "@com_google_code_findbugs_jsr305//jar",
         "@com_google_guava_guava//jar",
     ],
 )
