@@ -1,32 +1,22 @@
 package lu.zhe.mtgslackbot;
 
+import com.google.common.base.Joiner;
+
+import java.io.IOException;
 import java.util.Scanner;
 
 import lu.zhe.mtgslackbot.parsing.Parsing;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 /**
  * Main class that handles IO.
  */
-public class MtgslackbotServlet extends HttpServlet {
+public class MtgSlackbot {
   private DataSources dataSources;
-  private boolean debug = false;
   private boolean slack = true;
+  private static Joiner SPACE_JOINER = Joiner.on(" ");
 
-  @Override
-  public void init() throws ServletException {
-    init(
-        Boolean.getBoolean(getInitParameter("debug")),
-        Boolean.getBoolean(getInitParameter("slack")));
-  }
-
-  private void init(boolean debug, boolean slack) {
-    this.debug = debug;
+  private void init(boolean slack) {
     this.slack = slack;
     this.dataSources = new DataSources(slack);
   }
@@ -42,25 +32,16 @@ public class MtgslackbotServlet extends HttpServlet {
 
   public static void main(String[] args) {
     boolean slack = false;
-    boolean debug = false;
     for (String arg : args) {
       switch (arg) {
         case "slack":
           slack = true;
           continue;
-        case "debug":
-          debug = true;
-          continue;
         default:
       }
     }
     try {
-      MtgslackbotServlet servlet = new MtgslackbotServlet();
-      servlet.init(debug, slack);
-      Scanner sc = new Scanner(System.in);
-      while (sc.hasNextLine()) {
-        System.out.println(servlet.process(sc.nextLine()));
-      }
+      MtgSlackbot servlet = new MtgSlackbot();
     } catch (Throwable e) {
       e.printStackTrace();
     }

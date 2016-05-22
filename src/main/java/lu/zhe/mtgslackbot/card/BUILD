@@ -1,4 +1,4 @@
-package(default_visibility = ["//java/lu/zhe/mtgslackbot:__subpackages__"])
+package(default_visibility = ["//src/main/java/lu/zhe/mtgslackbot:__subpackages__"])
 
 java_library(
     name = "card",

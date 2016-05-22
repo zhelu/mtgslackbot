@@ -59,7 +59,7 @@ public class DataSources {
     try (ObjectInputStream ois =
         new ObjectInputStream(
             DataSources.class.getClassLoader().getResourceAsStream(
-                "lu/zhe/mtgslackbot/res/Cards.ser"))) {
+                "lu/zhe/mtgslackbot/Cards.ser"))) {
       long start = System.currentTimeMillis();
       allCards = (Map<String, Card>) ois.readObject();
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
@@ -71,7 +71,7 @@ public class DataSources {
     try (ObjectInputStream ois =
         new ObjectInputStream(
             DataSources.class.getClassLoader().getResourceAsStream(
-                "lu/zhe/mtgslackbot/res/Sets.ser"))) {
+                "lu/zhe/mtgslackbot/Sets.ser"))) {
       long start = System.currentTimeMillis();
       allSets = (Map<String, String>) ois.readObject();
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
@@ -83,7 +83,7 @@ public class DataSources {
     try (ObjectInputStream ois =
         new ObjectInputStream(
             DataSources.class.getClassLoader().getResourceAsStream(
-                "lu/zhe/mtgslackbot/res/Rules.ser"))) {
+                "lu/zhe/mtgslackbot/Rules.ser"))) {
       long start = System.currentTimeMillis();
       allRules = (Map<String, String>) ois.readObject();
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");

@@ -1,7 +1,7 @@
-package(default_visibility = ["//java/lu/zhe/mtgslackbot:__subpackages__"])
+package(default_visibility = ["//src/main/java/lu/zhe/mtgslackbot:__subpackages__"])
 
 java_library(
-    name = "rule",
+    name = "set",
     srcs = glob(["*.java"]),
     deps = [
         "@com_google_code_gson_gson//jar",

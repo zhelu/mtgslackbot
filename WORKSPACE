@@ -5,7 +5,6 @@
 # com.google.code.gson:gson:2.3
 # junit:junit:4.11
 
-
 maven_jar(
     name = "com_google_code_findbugs_jsr305",
     artifact = "com.google.code.findbugs:jsr305:2.0.3",
@@ -42,12 +41,3 @@ bind(
     name = "auto_value-jar",
     actual = "@auto_value//jar"
 )
-
-git_repository(
-    name = "io_bazel_rules_appengine",
-    remote = "https://github.com/bazelbuild/rules_appengine.git",
-    tag = "0.0.2",
-)
-
-load("@io_bazel_rules_appengine//appengine:appengine.bzl", "appengine_repositories")
-appengine_repositories()

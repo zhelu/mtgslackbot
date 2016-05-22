@@ -5,11 +5,14 @@
 ### Build serialied resources
 
 ```shell
-bazel build java/lu/zhe/mtgslackbot:Resources $absolute_path_to_java/lu/zhe/mtgslackbot/res$
+bazel build java/lu/zhe/mtgslackbot:BuildResources $absolute_path_to_java/lu/zhe/mtgslackbot/res$
 ```
 
-### Build runner
+### Testing
 
 ```shell
-bazel run java/lu/zhe/mtgslackbot:Runner
+bazel run java/lu/zhe/mtgslackbot:servlet -- \!mtg card serra angel
 ```
+
+### Deploying to heroku
+Run `push_heroku.sh`
