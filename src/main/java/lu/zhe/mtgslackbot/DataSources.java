@@ -1,7 +1,7 @@
 package lu.zhe.mtgslackbot;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;

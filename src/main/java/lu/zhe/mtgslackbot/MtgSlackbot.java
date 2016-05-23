@@ -1,6 +1,7 @@
 package lu.zhe.mtgslackbot;
 
-import com.google.common.base.Joiner;
+import static spark.Spark.port;
+import static spark.Spark.post;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -12,14 +13,9 @@ import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
  * Main class that handles IO.
  */
 public class MtgSlackbot {
-  private DataSources dataSources;
-  private boolean slack = true;
-  private static Joiner SPACE_JOINER = Joiner.on(" ");
-
-  private void init(boolean slack) {
-    this.slack = slack;
-    this.dataSources = new DataSources(slack);
-  }
+  private final DataSources dataSources = new DataSources(true);
+  private static final String RESPONSE_TEMPLATE =
+      "{\"text\": \"%s\", \"response_type\": \"in_channel\"}";
 
   private String process(String input) {
     try {
@@ -31,19 +27,18 @@ public class MtgSlackbot {
   }
 
   public static void main(String[] args) {
-    boolean slack = false;
-    for (String arg : args) {
-      switch (arg) {
-        case "slack":
-          slack = true;
-          continue;
-        default:
+    final MtgSlackbot server = new MtgSlackbot();
+
+    int serverPort = System.getenv("PORT") == null ? 8080 : Integer.valueOf(System.getenv("PORT"));
+
+    port(serverPort);
+
+    post("/", (request, response) -> {
+      if (!request.queryParams("token").equals(System.getenv("token"))) {
+        response.status(401);
+        return "Not authorized";
       }
-    }
-    try {
-      MtgSlackbot servlet = new MtgSlackbot();
-    } catch (Throwable e) {
-      e.printStackTrace();
-    }
+      return String.format(RESPONSE_TEMPLATE, server.process(request.body()));
+    });
   }
 }

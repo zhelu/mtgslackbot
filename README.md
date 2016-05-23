@@ -8,11 +8,5 @@
 bazel build java/lu/zhe/mtgslackbot:BuildResources $absolute_path_to_java/lu/zhe/mtgslackbot/res$
 ```
 
-### Testing
-
-```shell
-bazel run java/lu/zhe/mtgslackbot:servlet -- \!mtg card serra angel
-```
-
-### Deploying to heroku
-Run `push_heroku.sh`
+### Configuration
+heroku config:set token=$token_value_from_slack
