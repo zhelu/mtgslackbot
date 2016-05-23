@@ -35,7 +35,8 @@ public class MtgSlackbot {
     port(serverPort);
 
     get("/", (request, response) -> {
-      if (!request.queryParams("token").equals(System.getenv("token"))) {
+      System.out.println(request.raw());
+      if (!request.params("token").equals(System.getenv("token"))) {
         response.status(401);
         return "Not authorized";
       }
@@ -44,6 +45,7 @@ public class MtgSlackbot {
     });
 
     post("/", (request, response) -> {
+      System.out.println(request.raw());
       if (!request.queryParams("token").equals(System.getenv("token"))) {
         response.status(401);
         return "Not authorized";
