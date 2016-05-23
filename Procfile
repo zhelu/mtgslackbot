@@ -1,1 +1,1 @@
-web: my_build/install/mtgslackbot-git/bin/mtgslackbot-git
+web: my_build/install/*/bin/*
