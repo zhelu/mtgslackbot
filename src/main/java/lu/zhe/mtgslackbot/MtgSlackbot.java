@@ -3,9 +3,6 @@ package lu.zhe.mtgslackbot;
 import static spark.Spark.port;
 import static spark.Spark.post;
 
-import java.io.IOException;
-import java.util.Scanner;
-
 import lu.zhe.mtgslackbot.parsing.Parsing;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 

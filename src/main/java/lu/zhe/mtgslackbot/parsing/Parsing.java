@@ -35,7 +35,7 @@ public class Parsing {
   private static final Joiner PIPE_JOINER = Joiner.on("|");
   private static final Pattern TOKENIZER =
       Pattern.compile(
-          "s(?<command>" + PIPE_JOINER.join(COMMANDS) + ")\\s(?<args>.*)");
+          "(?<command>" + PIPE_JOINER.join(COMMANDS) + ")\\s(?<args>.*)");
   private static final Pattern WHOLE_PREDICATE =
       Pattern.compile("([a-z!]+(" + PIPE_JOINER.join(OPS) + ")(\"?)(.*)(\\2)|" +
          "([a-z!]+(" + PIPE_JOINER.join(OPS) + ")[^ \"]+))");
