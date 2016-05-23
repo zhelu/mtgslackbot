@@ -34,11 +34,12 @@ public class MtgSlackbot {
     port(serverPort);
 
     post("/", (request, response) -> {
+      System.out.println(request.queryParams("text"));
       if (!request.queryParams("token").equals(System.getenv("token"))) {
         response.status(401);
         return "Not authorized";
       }
-      response.type("text/json");
+      response.type("application/json");
       return String.format(RESPONSE_TEMPLATE, server.process(request.body()));
     });
   }
