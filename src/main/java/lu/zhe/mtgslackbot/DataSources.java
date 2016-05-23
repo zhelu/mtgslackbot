@@ -256,7 +256,7 @@ public class DataSources {
     builder
         .append(card.name())
         .append(" ")
-        .append(card.manaCost())
+        .append(substituteSymbols(card.manaCost()))
         .append(" || ")
         .append(card.type());
     if (!card.power().isEmpty() && !card.toughness().isEmpty()) {
