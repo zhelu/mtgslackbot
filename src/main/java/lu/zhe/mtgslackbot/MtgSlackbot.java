@@ -1,6 +1,5 @@
 package lu.zhe.mtgslackbot;
 
-import static spark.Spark.get;
 import static spark.Spark.port;
 import static spark.Spark.post;
 
@@ -34,18 +33,7 @@ public class MtgSlackbot {
 
     port(serverPort);
 
-    get("/", (request, response) -> {
-      System.out.println(request.raw().getQueryString());
-      if (!request.params("token").equals(System.getenv("token"))) {
-        response.status(401);
-        return "Not authorized";
-      }
-      response.type("text/json");
-      return String.format(RESPONSE_TEMPLATE, server.process(request.body()));
-    });
-
     post("/", (request, response) -> {
-      System.out.println(request.raw());
       if (!request.queryParams("token").equals(System.getenv("token"))) {
         response.status(401);
         return "Not authorized";
