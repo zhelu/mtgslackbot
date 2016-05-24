@@ -167,8 +167,7 @@ public class DataSources {
         }
       case SET:
         {
-          String set = allSets.get(input.arg());
-          return set == null ? "No set found" : set;
+          return getSet(arg);
         }
       case JHOIRA:
         return "not implemented";
@@ -178,6 +177,8 @@ public class DataSources {
         return "not implemented";
       case HELP:
         return "not implemented";
+      case RULE:
+        return getGlossaryOrRuleEntry(arg);
       default:
         return "not implemented";
     }
@@ -288,7 +289,7 @@ public class DataSources {
     builder
         .append(front.name())
         .append(" ")
-        .append(front.manaCost())
+        .append(substituteSymbols(front.manaCost()))
         .append(" || ")
         .append(front.type());
     if (!front.power().isEmpty() && !front.toughness().isEmpty()) {
@@ -340,7 +341,7 @@ public class DataSources {
         .append("\n")
         .append(left.name())
         .append(" ")
-        .append(left.manaCost())
+        .append(substituteSymbols(left.manaCost()))
         .append(" || ")
         .append(left.type());
     if (!left.power().isEmpty() && !left.toughness().isEmpty()) {
@@ -355,7 +356,7 @@ public class DataSources {
         .append("\n")
         .append(right.name())
         .append(" ")
-        .append(right.manaCost())
+        .append(substituteSymbols(right.manaCost()))
         .append(" || ")
         .append(right.type());
     if (!right.power().isEmpty() && !right.toughness().isEmpty()) {

@@ -8,6 +8,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 
 import java.util.ArrayList;
@@ -28,8 +29,12 @@ import javax.annotation.Nullable;
  */
 public class Parsing {
   private static final List<String> COMMANDS =
-      ImmutableList.of(
-          "card", "search", "count", "random", "set", "jhoira", "mojos", "momir", "help");
+      Lists.transform(ImmutableList.copyOf(Command.values()), new Function<Command, String>() {
+        @Override
+        public String apply(Command input) {
+          return input.toString().toLowerCase();
+        }
+      });
   private static final List<String> OPS =
       ImmutableList.of(":", "=", "<=", "<", ">", ">=", "!=", "~", "!~");
   private static final Joiner PIPE_JOINER = Joiner.on("|");
@@ -112,6 +117,8 @@ public class Parsing {
           // fall through intended
         case MOMIR:
           // fall through intended
+        case RULE:
+          // fall through intended
         case HELP:
           return ParsedInput.create(
               command,
@@ -166,6 +173,7 @@ public class Parsing {
     JHOIRA,
     MOJOS,
     MOMIR,
+    RULE,
     HELP;
   }
 
