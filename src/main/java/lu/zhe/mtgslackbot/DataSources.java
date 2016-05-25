@@ -482,7 +482,7 @@ public class DataSources {
     }
     switch (card.colors().iterator().next()) {
       case WHITE:
-        return "#FFFFFF";
+        return "#EEEEEE";
       case BLUE:
         return "#3333EE";
       case BLACK:
