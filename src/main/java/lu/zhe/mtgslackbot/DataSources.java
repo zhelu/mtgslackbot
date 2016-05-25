@@ -320,7 +320,6 @@ public class DataSources {
         .append(substituteSymbols(front.oracleText()));
     JSONObject frontJson =
         new JSONObject().put("text", builder.toString()).put("color", getColor(front));
-    JSONObject linkJson = new JSONObject().put("text", flipsOrTransforms + " INTO:");
     builder = new StringBuilder()
         .append(back.name())
         .append(" || ")
@@ -334,10 +333,12 @@ public class DataSources {
     builder
         .append("\n")
         .append(substituteSymbols(back.oracleText()));
-    JSONObject backJson =
-        new JSONObject().put("text", builder.toString()).put("color", getColor(back));
+    JSONObject backJson = new JSONObject()
+        .put("text", builder.toString())
+        .put("color", getColor(back))
+        .put("pretext", flipsOrTransforms + " INTO:");
     return newJsonObject()
-        .put("attachments", new JSONArray().put(frontJson).put(linkJson).put(backJson));
+        .put("attachments", new JSONArray().put(frontJson).put(backJson));
   }
 
   private JSONObject getSplitDisplayJson(Card card) {
