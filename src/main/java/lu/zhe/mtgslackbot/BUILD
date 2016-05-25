@@ -19,6 +19,7 @@ java_library(
         "//src/main/java/lu/zhe/mtgslackbot/parsing:parsing",
         "//src/main/resources/lu/zhe/mtgslackbot:res",
         "@com_google_guava_guava//jar",
+        "@org_json_json//jar",
     ],
 )
 

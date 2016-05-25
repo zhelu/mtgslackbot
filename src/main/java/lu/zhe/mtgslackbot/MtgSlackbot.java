@@ -19,7 +19,7 @@ public class MtgSlackbot {
   private String process(String input) {
     try {
       ParsedInput parsedInput = Parsing.getParsedInput(input);
-      return dataSources.processInput(parsedInput);
+      return dataSources.processInput(parsedInput).toString();
     } catch (Exception e) {
       return e.getMessage();
     }
@@ -38,10 +38,7 @@ public class MtgSlackbot {
         return "Not authorized";
       }
       response.type("application/json");
-      JSONObject json = new JSONObject();
-      json.put("text", server.process(request.queryParams("text")));
-      json.put("response_type", "in_channel");
-      return json.toString();
+      return server.process(request.queryParams("text"));
     });
   }
 }

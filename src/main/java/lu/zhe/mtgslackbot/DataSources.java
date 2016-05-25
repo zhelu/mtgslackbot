@@ -25,6 +25,9 @@ import lu.zhe.mtgslackbot.card.Layout;
 import lu.zhe.mtgslackbot.card.Legality;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 /**
  * Wrapper class that contains set and card data.
  *
@@ -93,8 +96,8 @@ public class DataSources {
     System.out.println("finished loading rule data...");
   }
 
-  /** Get the display string for the parsed input. */
-  public String processInput(ParsedInput input) {
+  /** Get the display json for the parsed input. */
+  public JSONObject processInput(ParsedInput input) {
     String arg = input.arg();
     List<Predicate<Card>> predicates = input.filters();
     Predicate<Card> predicate = Predicates.and(predicates);
@@ -103,7 +106,7 @@ public class DataSources {
         {
           Card card = allCards.get(arg);
           if (card != null) {
-            return getDisplayString(card);
+            return getDisplayJson(card);
           }
           List<Card> prefixMatch = new ArrayList<>();
           List<Card> anyMatch = new ArrayList<>();
@@ -115,10 +118,10 @@ public class DataSources {
             }
           }
           if (prefixMatch.size() == 1) {
-            return getDisplayString(prefixMatch.get(0));
+            return getDisplayJson(prefixMatch.get(0));
           }
           if (anyMatch.size() == 1) {
-            return getDisplayString(anyMatch.get(0));
+            return getDisplayJson(anyMatch.get(0));
           }
           if (!prefixMatch.isEmpty()) {
             return getTopList(prefixMatch);
@@ -126,7 +129,7 @@ public class DataSources {
           if (!anyMatch.isEmpty()) {
             return getTopList(anyMatch);
           }
-          return "No matches found";
+          return newJsonObject().put("text", "No matches found");
         }
       case SEARCH:
         {
@@ -139,7 +142,7 @@ public class DataSources {
           if (!matches.isEmpty()) {
             return getTopList(matches);
           }
-          return "No matches found";
+          return newJsonObject().put("text", "No matches found");
         }
       case COUNT:
         {
@@ -149,7 +152,7 @@ public class DataSources {
               ++count;
             }
           }
-          return count + " matches";
+          return newJsonObject().put("text", count + " matches");
         }
       case RANDOM:
         {
@@ -161,30 +164,30 @@ public class DataSources {
           }
           if (!matches.isEmpty()) {
             Card c = matches.get(random.nextInt(matches.size()));
-            return getDisplayString(c);
+            return getDisplayJson(c);
           }
-          return "No matches found";
+          return newJsonObject().put("text", "No matches found");
         }
       case SET:
         {
           return getSet(arg);
         }
       case JHOIRA:
-        return "not implemented";
+        return newJsonObject().put("text", "not implemented");
       case MOJOS:
-        return "not implemented";
+        return newJsonObject().put("text", "not implemented");
       case MOMIR:
-        return "not implemented";
+        return newJsonObject().put("text", "not implemented");
       case HELP:
-        return "not implemented";
+        return newJsonObject().put("text", "not implemented");
       case RULE:
         return getGlossaryOrRuleEntry(arg);
       default:
-        return "not implemented";
+        return newJsonObject().put("text", "not implemented");
     }
   }
 
-  private static String getTopList(List<Card> cards) {
+  private static JSONObject getTopList(List<Card> cards) {
     int extras = 0;
     if (cards.size() > 10) {
       extras = cards.size() - 10;
@@ -198,36 +201,36 @@ public class DataSources {
     });
     String result = SEMICOLON_JOINER.join(Lists.transform(cards, NAME_GETTER));
     if (extras == 0) {
-      return result;
+      return newJsonObject().put("text", result);
     }
-    return result + " plus " + extras + " others";
+    return newJsonObject().put("text", result + " plus " + extras + " others");
   }
 
   /**
-   * Gets the display string for the canonical name of a card.
+   * Gets the display json for the canonical name of a card.
    */
-  public String getDisplayString(String canonicalName) {
+  public JSONObject getDisplayJson(String canonicalName) {
     Card card = allCards.get(canonicalName);
     if (card == null) {
       throw new NoSuchElementException(canonicalName + " is not the canonical name for a card");
     }
-    return getDisplayString(card);
+    return getDisplayJson(card);
   }
 
   /**
-   * Gets the display string for a {@link Card}.
+   * Gets the display json for a {@link Card}.
    */
-  public String getDisplayString(Card card) {
+  public JSONObject getDisplayJson(Card card) {
     Layout layout = card.layout();
     switch (layout) {
       case NORMAL:
-        return getNormalDisplayString(card);
+        return getNormalDisplayJson(card);
       case DOUBLE_FACED:
-        return getFlipDoubleDisplayString(card, "TRANSFORMS");
+        return getFlipDoubleDisplayJson(card, "TRANSFORMS");
       case SPLIT:
-        return getSplitDisplayString(card);
+        return getSplitDisplayJson(card);
       case FLIP:
-        return getFlipDoubleDisplayString(card, "FLIPS");
+        return getFlipDoubleDisplayJson(card, "FLIPS");
       default:
         throw new IllegalArgumentException("Unknown layout: " + layout);
     }
@@ -257,7 +260,10 @@ public class DataSources {
     return builder.toString();
   }
 
-  private String getNormalDisplayString(Card card) {
+  /**
+   * Return json representation for normal card.
+   */
+  private JSONObject getNormalDisplayJson(Card card) {
     StringBuilder builder = new StringBuilder();
     builder
         .append(card.name())
@@ -278,15 +284,17 @@ public class DataSources {
         .append(COMMA_JOINER.join(card.printings()))
         .append("\n")
         .append(substituteSymbols(card.oracleText()));
-    return builder.toString();
+    JSONObject cardJson =
+        new JSONObject().put("text", builder.toString()).put("color", getColor(card));
+    return newJsonObject().put("attachments", new JSONArray().put(cardJson));
   }
 
   /**
-   * Returns a string for a double-sided or flip card.
+   * Returns json representation for a double-sided or flip card.
    *
    * <p>flipsOrTransforms should be "FLIPS" or "TRANSFORMS."
    */
-  private String getFlipDoubleDisplayString(Card card, String flipsOrTransforms) {
+  private JSONObject getFlipDoubleDisplayJson(Card card, String flipsOrTransforms) {
     List<String> names = card.names();
     Card front = allCards.get(names.get(0));
     Card back = allCards.get(names.get(1));
@@ -309,11 +317,11 @@ public class DataSources {
         .append(" ")
         .append(COMMA_JOINER.join(front.printings()))
         .append("\n")
-        .append(substituteSymbols(front.oracleText()))
-        .append("\n")
-        .append(flipsOrTransforms)
-        .append(" INTO:\n");
-    builder
+        .append(substituteSymbols(front.oracleText()));
+    JSONObject frontJson =
+        new JSONObject().put("text", builder.toString()).put("color", getColor(front));
+    JSONObject linkJson = new JSONObject().put("text", flipsOrTransforms + " INTO:");
+    builder = new StringBuilder()
         .append(back.name())
         .append(" || ")
         .append(back.type());
@@ -326,14 +334,18 @@ public class DataSources {
     builder
         .append("\n")
         .append(substituteSymbols(back.oracleText()));
-    return builder.toString();
+    JSONObject backJson =
+        new JSONObject().put("text", builder.toString()).put("color", getColor(back));
+    return newJsonObject()
+        .put("attachments", new JSONArray().put(frontJson).put(linkJson).put(backJson));
   }
 
-  private String getSplitDisplayString(Card card) {
+  private JSONObject getSplitDisplayJson(Card card) {
     List<String> names = card.names();
     Card left = allCards.get(names.get(0));
     Card right = allCards.get(names.get(1));
     StringBuilder builder = new StringBuilder();
+    JSONObject json = newJsonObject();
     builder
         .append(left.name())
         .append(" // ")
@@ -342,8 +354,9 @@ public class DataSources {
         .append(" | ")
         .append(getLegality(left))
         .append(" ")
-        .append(COMMA_JOINER.join(left.printings()))
-        .append("\n")
+        .append(COMMA_JOINER.join(left.printings()));
+    json.put("text", builder.toString());
+    builder = new StringBuilder()
         .append(left.name())
         .append(" ")
         .append(substituteSymbols(left.manaCost()))
@@ -357,8 +370,10 @@ public class DataSources {
     }
     builder
         .append("\n")
-        .append(substituteSymbols(left.oracleText()))
-        .append("\n")
+        .append(substituteSymbols(left.oracleText()));
+    JSONObject leftJson =
+        new JSONObject().put("text", builder.toString()).put("color", getColor(left));
+    builder = new StringBuilder()
         .append(right.name())
         .append(" ")
         .append(substituteSymbols(right.manaCost()))
@@ -373,26 +388,28 @@ public class DataSources {
     builder
         .append("\n")
         .append(substituteSymbols(right.oracleText()));
-    return builder.toString();
+    JSONObject rightJson =
+        new JSONObject().put("text", builder.toString()).put("color", getColor(right));
+    return json.put("attachments", new JSONArray().put(leftJson).put(rightJson));
   }
 
   /**
    * Gets the display text for a set given its set abbreviation.
    */
-  public String getSet(String setAbbreviation) {
+  public JSONObject getSet(String setAbbreviation) {
     String set = allSets.get(setAbbreviation);
     if (set == null) {
       throw new NoSuchElementException(set + " is not a valid set abbreviation");
     }
-    return set;
+    return newJsonObject().put("text", set);
   }
 
-  public String getGlossaryOrRuleEntry(String keywordOrParagraph) {
+  public JSONObject getGlossaryOrRuleEntry(String keywordOrParagraph) {
     String entry = allRules.get(keywordOrParagraph);
     if (entry == null) {
       throw new NoSuchElementException("No entry for " + keywordOrParagraph);
     }
-    return entry;
+    return newJsonObject().put("text", entry);
   }
 
   private String substituteSymbols(String text) {
@@ -451,5 +468,30 @@ public class DataSources {
           .replaceAll("\\{B\\}", ":bk:");
     }
     return text;
+  }
+
+  private static JSONObject newJsonObject() {
+    return new JSONObject().put("response_type", "in_channel");
+  }
+
+  private static String getColor(Card card) {
+    if (card.colors().size() > 1) {
+      return "#EEEE00";
+    } else if (card.colors().isEmpty()) {
+      return card.types().contains("equipment") ? "#884444" : "#BBBBBB";
+    }
+    switch (card.colors().iterator().next()) {
+      case WHITE:
+        return "#FFFFFF";
+      case BLUE:
+        return "#3333EE";
+      case BLACK:
+        return "#000000";
+      case RED:
+        return "#BB0000";
+      case GREEN:
+        return "#00AA00";
+    }
+    throw new IllegalStateException("unknown color information");
   }
 }
