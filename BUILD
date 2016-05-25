@@ -45,6 +45,14 @@ java_library(
     ],
 )
 
+java_library(
+    name = "org_json_json",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_json_json//jar",
+    ],
+)
+
 java_plugin(
     name = "auto_plugin",
     visibility = ["//visibility:public"],

@@ -37,6 +37,11 @@ maven_jar(
     artifact = "com.google.auto.value:auto-value:1.0",
 )
 
+maven_jar(
+    name = "org_json_json",
+    artifact = "org.json:json:20160212",
+)
+
 bind(
     name = "auto_value-jar",
     actual = "@auto_value//jar"

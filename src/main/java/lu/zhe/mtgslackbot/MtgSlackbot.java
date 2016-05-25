@@ -6,6 +6,8 @@ import static spark.Spark.post;
 import lu.zhe.mtgslackbot.parsing.Parsing;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 
+import org.json.JSONObject;
+
 /**
  * Main class that handles IO.
  */
@@ -36,7 +38,10 @@ public class MtgSlackbot {
         return "Not authorized";
       }
       response.type("application/json");
-      return String.format(RESPONSE_TEMPLATE, server.process(request.queryParams("text")));
+      JSONObject json = new JSONObject();
+      json.put("text", server.process(request.queryParams("text")));
+      json.put("response_type", "in_channel");
+      return json.toString();
     });
   }
 }
