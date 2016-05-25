@@ -236,15 +236,20 @@ public class DataSources {
   private String getLegality(Card card) {
     StringBuilder builder = new StringBuilder();
     Map<Format, Legality> legalities = card.legalities();
+    boolean legal = false;
     for (Format format : FORMATS) {
       Legality legality = legalities.get(format);
       if (legality == Legality.LEGAL || legality == Legality.RESTRICTED) {
+        legal = true;
         char formatChar = format.toString().toLowerCase().charAt(0);
         builder.append(formatChar);
         if (legality == Legality.RESTRICTED) {
           builder.append("*");
         }
       }
+    }
+    if (!legal) {
+      builder.append("BANNED");
     }
     if (card.reserved()) {
       builder.append(" :(");
