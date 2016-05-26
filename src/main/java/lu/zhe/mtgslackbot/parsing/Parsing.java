@@ -108,7 +108,10 @@ public class Parsing {
       String args = m.group("args");
       switch (command) {
         case CARD:
-          // fall through intended
+          return ParsedInput.create(
+              command,
+              CardUtils.canonicalizeName(m.group("args")),
+              ImmutableList.<Predicate<Card>>of());
         case SET:
           // fall through intended
         case JHOIRA:
@@ -122,7 +125,7 @@ public class Parsing {
         case HELP:
           return ParsedInput.create(
               command,
-              CardUtils.canonicalizeName(m.group("args")),
+              args,
               ImmutableList.<Predicate<Card>>of());
         case SEARCH:
           // fall through intended

@@ -406,11 +406,17 @@ public class DataSources {
   }
 
   public JSONObject getGlossaryOrRuleEntry(String keywordOrParagraph) {
+    keywordOrParagraph = keywordOrParagraph.toLowerCase();
     String entry = allRules.get(keywordOrParagraph);
-    if (entry == null) {
-      throw new NoSuchElementException("No entry for " + keywordOrParagraph);
+    if (entry != null) {
+      return newJsonObject().put("text", entry);
     }
-    return newJsonObject().put("text", entry);
+    for (Entry<String, String> ruleEntry : allRules.entrySet()) {
+      if (ruleEntry.getKey().contains(keywordOrParagraph)) {
+        return newJsonObject().put("text", ruleEntry.getValue());
+      }
+    }
+    throw new NoSuchElementException("No entry for " + keywordOrParagraph);
   }
 
   private String substituteSymbols(String text) {

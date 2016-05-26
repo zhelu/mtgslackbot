@@ -23,7 +23,7 @@ public class Resources {
   private static final Pattern RULES_URL_PATTERN = Pattern.compile(
       ".*(?<url>http://media.wizards.com/\\d+/docs/MagicCompRules_\\d+.txt).*");
 
-  private Resources(String path) {
+  private Resources(String path, boolean debug) {
     System.setProperty("http.agent", "mtgslackbot");
     Map<String, Card> allCards;
     Map<String, String> allSets;
@@ -38,12 +38,15 @@ public class Resources {
     } catch (IOException e) {
       throw new RuntimeException("Error parsing cards", e);
     }
-    try (ObjectOutputStream oos =
-        new ObjectOutputStream(
-            new FileOutputStream(path + "/Cards.ser"))) {
-      oos.writeObject(allCards);
-    } catch (IOException e) {
-      throw new RuntimeException("Couldn't serialize card data", e);
+    if (!debug) {
+      try (ObjectOutputStream oos =
+          new ObjectOutputStream(
+              new FileOutputStream(path + "/Cards.ser"))) {
+        oos.writeObject(allCards);
+        System.out.println("Wrote out Cards.ser");
+      } catch (IOException e) {
+        throw new RuntimeException("Couldn't serialize card data", e);
+      }
     }
     try {
       long start = System.currentTimeMillis();
@@ -55,12 +58,15 @@ public class Resources {
     } catch (IOException e) {
       throw new RuntimeException("Error parsing cards", e);
     }
-    try (ObjectOutputStream oos =
-        new ObjectOutputStream(
-            new FileOutputStream(path + "/Sets.ser"))) {
-      oos.writeObject(allSets);
-    } catch (IOException e) {
-      throw new RuntimeException("Couldn't serialize set data", e);
+    if (!debug) {
+      try (ObjectOutputStream oos =
+          new ObjectOutputStream(
+              new FileOutputStream(path + "/Sets.ser"))) {
+        oos.writeObject(allSets);
+        System.out.println("Wrote out Sets.ser");
+      } catch (IOException e) {
+        throw new RuntimeException("Couldn't serialize set data", e);
+      }
     }
     try {
       long start = System.currentTimeMillis();
@@ -78,29 +84,32 @@ public class Resources {
         }
       }
       pageScanner.close();
-      Scanner sc = new Scanner(new URL(rulesUrl).openStream());
+      Scanner sc = new Scanner(new URL(rulesUrl).openStream(), "ISO-8859-1");
       allRules = RuleUtils.parseRules(sc);
       System.out.println("Rule entries: " + allRules.size());
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
     } catch (IOException e) {
       throw new RuntimeException("Error parsing comprehensive rules", e);
     }
-    try (ObjectOutputStream oos =
-        new ObjectOutputStream(
-            new FileOutputStream(path + "/Rules.ser"))) {
-      oos.writeObject(allRules);
-    } catch (IOException e) {
-      throw new RuntimeException("Couldn't serialize rule data", e);
+    if (!debug) {
+      try (ObjectOutputStream oos =
+          new ObjectOutputStream(
+              new FileOutputStream(path + "/Rules.ser"))) {
+        oos.writeObject(allRules);
+        System.out.println("Wrote out Rules.ser");
+      } catch (IOException e) {
+        throw new RuntimeException("Couldn't serialize rule data", e);
+      }
     }
   }
 
   public static void main(String[] args) {
-    if (args.length != 1) {
+    if (args.length < 1) {
       System.err.println(
-          "Expect single path argument. Should reference java/lu/zhe/mtgslackbot/res");
+          "Expected path argument. Should reference src/main/resources/lu/zhe/mtgslackbot/");
       System.exit(1);
     }
     System.out.println("Building resources...");
-    Resources setupTask = new Resources(args[0]);
+    Resources setupTask = new Resources(args[0], args.length == 2);
   }
 }

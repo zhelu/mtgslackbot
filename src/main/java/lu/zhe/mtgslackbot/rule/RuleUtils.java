@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
  */
 public class RuleUtils {
   private static final Pattern RULE_PATTERN =
-      Pattern.compile("(?<p>\\d+\\.(\\d+(\\.|[a-z]))?) (?<rule>.*)");
+      Pattern.compile("(?<p>\\d+(\\.\\d+([a-z])?)?)\\.? (?<rule>.*)");
 
   private RuleUtils() {}
 
@@ -43,6 +43,7 @@ public class RuleUtils {
       if (line.equals("Glossary") && readRules) {
         readRules = false;
         readGlossary = true;
+        glossaryEntry = null;
         continue;
       }
       if (line.isEmpty()) {
@@ -67,16 +68,18 @@ public class RuleUtils {
         }
       }
       if (readGlossary) {
-        String text = sc.nextLine();
         if (glossaryEntry == null) {
-          glossaryEntry = text.replaceAll("(Obsolete)", "");
+          glossaryEntry = line.replaceAll("(Obsolete)", "");
+          lastParagraph = null;
+        } else if (!line.trim().isEmpty()) {
+          lastParagraph += "\n" + line.trim();
         } else {
           if (glossaryEntry.contains(",")) {
             for (String item : glossaryEntry.split(",")) {
-              builder.put(item.trim(), text);
+              builder.put(item.trim(), lastParagraph);
             }
           } else {
-            builder.put(glossaryEntry.trim(), text);
+            builder.put(glossaryEntry.trim().toLowerCase(), lastParagraph);
           }
           glossaryEntry = null;
         }
