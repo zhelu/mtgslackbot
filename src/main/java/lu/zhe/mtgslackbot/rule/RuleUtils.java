@@ -30,7 +30,10 @@ public class RuleUtils {
 
     Map<String, String> builder = new HashMap<>();
     while (sc.hasNextLine()) {
-      String line = sc.nextLine();
+      String line = sc.nextLine()
+          .replaceAll("\u0093", "\"")
+          .replaceAll("\u0094", "\"")
+          .replaceAll("\u0092", "'");
       if (line.equals("Credits")) {
         if (!readGlossary) {
           readRules = true;
@@ -46,12 +49,12 @@ public class RuleUtils {
         glossaryEntry = null;
         continue;
       }
-      if (line.isEmpty()) {
-        lastParagraph = null;
-        continue;
-      }
       if (readRules) {
         Matcher m = RULE_PATTERN.matcher(line);
+        if (line.isEmpty()) {
+          lastParagraph = null;
+          continue;
+        }
         if (!m.matches() && !line.startsWith("Example: ") && !line.startsWith("  ")) {
           System.out.println(line);
         }
@@ -72,7 +75,11 @@ public class RuleUtils {
           glossaryEntry = line.replaceAll("(Obsolete)", "");
           lastParagraph = null;
         } else if (!line.trim().isEmpty()) {
-          lastParagraph += "\n" + line.trim();
+          if (lastParagraph == null) {
+            lastParagraph = line;
+          } else {
+            lastParagraph += "\n" + line;
+          }
         } else {
           if (glossaryEntry.contains(",")) {
             for (String item : glossaryEntry.split(",")) {
