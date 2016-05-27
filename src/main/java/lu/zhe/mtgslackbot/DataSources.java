@@ -53,11 +53,9 @@ public class DataSources {
   private final Map<String, Card> allCards;
   private final Map<String, String> allSets;
   private final Map<String, String> allRules;
-  private final boolean useSlackSymbols;
 
   @SuppressWarnings("unchecked")
-  public DataSources(boolean useSlackSymbols) {
-    this.useSlackSymbols = useSlackSymbols;
+  public DataSources() {
     System.out.println("loading card data...");
     try (ObjectInputStream ois =
         new ObjectInputStream(
@@ -268,7 +266,7 @@ public class DataSources {
     builder
         .append(card.name())
         .append(" ")
-        .append(substituteSymbols(card.manaCost()))
+        .append(card.manaCost())
         .append(" || ")
         .append(card.type());
     if (!card.power().isEmpty() && !card.toughness().isEmpty()) {
@@ -283,7 +281,7 @@ public class DataSources {
         .append(" ")
         .append(COMMA_JOINER.join(card.printings()))
         .append("\n")
-        .append(substituteSymbols(card.oracleText()));
+        .append(card.oracleText());
     JSONObject cardJson =
         new JSONObject().put("text", builder.toString()).put("color", getColor(card));
     return newJsonObject().put("attachments", new JSONArray().put(cardJson));
@@ -302,7 +300,7 @@ public class DataSources {
     builder
         .append(front.name())
         .append(" ")
-        .append(substituteSymbols(front.manaCost()))
+        .append(front.manaCost())
         .append(" || ")
         .append(front.type());
     if (!front.power().isEmpty() && !front.toughness().isEmpty()) {
@@ -317,7 +315,7 @@ public class DataSources {
         .append(" ")
         .append(COMMA_JOINER.join(front.printings()))
         .append("\n")
-        .append(substituteSymbols(front.oracleText()));
+        .append(front.oracleText());
     JSONObject frontJson =
         new JSONObject().put("text", builder.toString()).put("color", getColor(front));
     builder = new StringBuilder()
@@ -332,7 +330,7 @@ public class DataSources {
     }
     builder
         .append("\n")
-        .append(substituteSymbols(back.oracleText()));
+        .append(back.oracleText());
     JSONObject backJson = new JSONObject()
         .put("text", builder.toString())
         .put("color", getColor(back))
@@ -360,7 +358,7 @@ public class DataSources {
     builder = new StringBuilder()
         .append(left.name())
         .append(" ")
-        .append(substituteSymbols(left.manaCost()))
+        .append(left.manaCost())
         .append(" || ")
         .append(left.type());
     if (!left.power().isEmpty() && !left.toughness().isEmpty()) {
@@ -371,13 +369,13 @@ public class DataSources {
     }
     builder
         .append("\n")
-        .append(substituteSymbols(left.oracleText()));
+        .append(left.oracleText());
     JSONObject leftJson =
         new JSONObject().put("text", builder.toString()).put("color", getColor(left));
     builder = new StringBuilder()
         .append(right.name())
         .append(" ")
-        .append(substituteSymbols(right.manaCost()))
+        .append(right.manaCost())
         .append(" || ")
         .append(right.type());
     if (!right.power().isEmpty() && !right.toughness().isEmpty()) {
@@ -388,7 +386,7 @@ public class DataSources {
     }
     builder
         .append("\n")
-        .append(substituteSymbols(right.oracleText()));
+        .append(right.oracleText());
     JSONObject rightJson =
         new JSONObject().put("text", builder.toString()).put("color", getColor(right));
     return json.put("attachments", new JSONArray().put(leftJson).put(rightJson));
@@ -417,66 +415,6 @@ public class DataSources {
       }
     }
     throw new NoSuchElementException("No entry for " + keywordOrParagraph);
-  }
-
-  private String substituteSymbols(String text) {
-    if (useSlackSymbols) {
-      return text
-          .replaceAll("\\{2/B\\}", ":2b:")
-          .replaceAll("\\{2/G\\}", ":2g:")
-          .replaceAll("\\{2/R\\}", ":2r:")
-          .replaceAll("\\{2/U\\}", ":2u:")
-          .replaceAll("\\{2/W\\}", ":2w:")
-          .replaceAll("\\{B/G\\}", ":bg:")
-          .replaceAll("\\{B/P\\}", ":bp:")
-          .replaceAll("\\{B/R\\}", ":br:")
-          .replaceAll("\\{C\\}", ":c:")
-          .replaceAll("\\{G\\}", ":g:")
-          .replaceAll("\\{G/P\\}", ":gp:")
-          .replaceAll("\\{G/U\\}", ":gu:")
-          .replaceAll("\\{G/W\\}", ":gw:")
-          .replaceAll("\\{Q\\}", ":q:")
-          .replaceAll("\\{R\\}", ":r:")
-          .replaceAll("\\{R/G\\}", ":rg:")
-          .replaceAll("\\{R/P\\}", ":rp:")
-          .replaceAll("\\{R/W\\}", ":rw:")
-          .replaceAll("\\{S\\}", ":s:")
-          .replaceAll("\\{T\\}", ":t:")
-          .replaceAll("\\{U\\}", ":u:")
-          .replaceAll("\\{U/P\\}", ":u-p:")
-          .replaceAll("\\{U/B\\}", ":ub:")
-          .replaceAll("\\{U/R\\}", ":ur:")
-          .replaceAll("\\{W/U\\}", ":wu:")
-          .replaceAll("\\{W/P\\}", ":wp:")
-          .replaceAll("\\{W\\}", ":w:")
-          .replaceAll("\\{0\\}", ":0:")
-          .replaceAll("\\{1\\}", ":1:")
-          .replaceAll("\\{2\\}", ":2:")
-          .replaceAll("\\{3\\}", ":3:")
-          .replaceAll("\\{4\\}", ":4:")
-          .replaceAll("\\{5\\}", ":5:")
-          .replaceAll("\\{6\\}", ":6:")
-          .replaceAll("\\{7\\}", ":7:")
-          .replaceAll("\\{8\\}", ":8:")
-          .replaceAll("\\{9\\}", ":9:")
-          .replaceAll("\\{10\\}", ":10:")
-          .replaceAll("\\{11\\}", ":11:")
-          .replaceAll("\\{12\\}", ":12:")
-          .replaceAll("\\{13\\}", ":13:")
-          .replaceAll("\\{14\\}", ":14:")
-          .replaceAll("\\{15\\}", ":15:")
-          .replaceAll("\\{16\\}", ":16:")
-          .replaceAll("\\{17\\}", ":17:")
-          .replaceAll("\\{18\\}", ":18:")
-          .replaceAll("\\{19\\}", ":19:")
-          .replaceAll("\\{20\\}", ":20:")
-          .replaceAll("\\{X\\}", ":xx:")
-          .replaceAll("\\{W/B\\}", ":wb:")
-          .replaceAll("\\{B\\}", ":bk:")
-          .replaceAll("(", "(_")
-          .replaceAll(")", "_)");
-    }
-    return text;
   }
 
   private static JSONObject newJsonObject() {

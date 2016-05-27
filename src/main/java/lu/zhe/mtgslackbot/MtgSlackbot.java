@@ -12,7 +12,7 @@ import org.json.JSONObject;
  * Main class that handles IO.
  */
 public class MtgSlackbot {
-  private final DataSources dataSources = new DataSources(true);
+  private final DataSources dataSources = new DataSources();
   private static final String RESPONSE_TEMPLATE =
       "{\"text\": \"%s\", \"response_type\": \"in_channel\"}";
 
