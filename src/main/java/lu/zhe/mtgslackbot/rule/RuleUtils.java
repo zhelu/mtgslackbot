@@ -33,6 +33,7 @@ public class RuleUtils {
       String line = sc.nextLine()
           .replaceAll("\u0093", "\"")
           .replaceAll("\u0094", "\"")
+          .replaceAll("\u0097", "-")
           .replaceAll("\u0092", "'");
       if (line.equals("Credits")) {
         if (!readGlossary) {
