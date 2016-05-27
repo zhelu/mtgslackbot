@@ -472,7 +472,9 @@ public class DataSources {
           .replaceAll("\\{20\\}", ":20:")
           .replaceAll("\\{X\\}", ":xx:")
           .replaceAll("\\{W/B\\}", ":wb:")
-          .replaceAll("\\{B\\}", ":bk:");
+          .replaceAll("\\{B\\}", ":bk:")
+          .replaceAll("(", "(_")
+          .replaceAll(")", "_)");
     }
     return text;
   }
