@@ -127,7 +127,7 @@ public class DataSources {
           if (!anyMatch.isEmpty()) {
             return getTopList(anyMatch);
           }
-          return newJsonObject().put("text", "No matches found");
+          return newTopJsonObj().put("text", "No matches found");
         }
       case SEARCH:
         {
@@ -140,7 +140,7 @@ public class DataSources {
           if (!matches.isEmpty()) {
             return getTopList(matches);
           }
-          return newJsonObject().put("text", "No matches found");
+          return newTopJsonObj().put("text", "No matches found");
         }
       case COUNT:
         {
@@ -150,7 +150,7 @@ public class DataSources {
               ++count;
             }
           }
-          return newJsonObject().put("text", count + " matches");
+          return newTopJsonObj().put("text", count + " matches");
         }
       case RANDOM:
         {
@@ -164,24 +164,24 @@ public class DataSources {
             Card c = matches.get(random.nextInt(matches.size()));
             return getDisplayJson(c);
           }
-          return newJsonObject().put("text", "No matches found");
+          return newTopJsonObj().put("text", "No matches found");
         }
       case SET:
         {
           return getSet(arg);
         }
       case JHOIRA:
-        return newJsonObject().put("text", "not implemented");
+        return newTopJsonObj().put("text", "not implemented");
       case MOJOS:
-        return newJsonObject().put("text", "not implemented");
+        return newTopJsonObj().put("text", "not implemented");
       case MOMIR:
-        return newJsonObject().put("text", "not implemented");
+        return newTopJsonObj().put("text", "not implemented");
       case HELP:
-        return newJsonObject().put("text", "not implemented");
+        return newTopJsonObj().put("text", "not implemented");
       case RULE:
         return getGlossaryOrRuleEntry(arg);
       default:
-        return newJsonObject().put("text", "not implemented");
+        return newTopJsonObj().put("text", "not implemented");
     }
   }
 
@@ -199,9 +199,9 @@ public class DataSources {
     });
     String result = SEMICOLON_JOINER.join(Lists.transform(cards, NAME_GETTER));
     if (extras == 0) {
-      return newJsonObject().put("text", result);
+      return newTopJsonObj().put("text", result);
     }
-    return newJsonObject().put("text", result + " plus " + extras + " others");
+    return newTopJsonObj().put("text", result + " plus " + extras + " others");
   }
 
   /**
@@ -283,8 +283,8 @@ public class DataSources {
         .append("\n")
         .append(card.oracleText());
     JSONObject cardJson =
-        new JSONObject().put("text", builder.toString()).put("color", getColor(card));
-    return newJsonObject().put("attachments", new JSONArray().put(cardJson));
+        newAttachment().put("text", builder.toString()).put("color", getColor(card));
+    return newTopJsonObj().put("attachments", new JSONArray().put(cardJson));
   }
 
   /**
@@ -317,7 +317,7 @@ public class DataSources {
         .append("\n")
         .append(front.oracleText());
     JSONObject frontJson =
-        new JSONObject().put("text", builder.toString()).put("color", getColor(front));
+        newAttachment().put("text", builder.toString()).put("color", getColor(front));
     builder = new StringBuilder()
         .append(back.name())
         .append(" || ")
@@ -331,11 +331,11 @@ public class DataSources {
     builder
         .append("\n")
         .append(back.oracleText());
-    JSONObject backJson = new JSONObject()
+    JSONObject backJson = newAttachment()
         .put("text", builder.toString())
         .put("color", getColor(back))
         .put("pretext", flipsOrTransforms + " INTO:");
-    return newJsonObject()
+    return newTopJsonObj()
         .put("attachments", new JSONArray().put(frontJson).put(backJson));
   }
 
@@ -344,7 +344,7 @@ public class DataSources {
     Card left = allCards.get(names.get(0));
     Card right = allCards.get(names.get(1));
     StringBuilder builder = new StringBuilder();
-    JSONObject json = newJsonObject();
+    JSONObject json = newTopJsonObj();
     builder
         .append(left.name())
         .append(" // ")
@@ -371,7 +371,7 @@ public class DataSources {
         .append("\n")
         .append(left.oracleText());
     JSONObject leftJson =
-        new JSONObject().put("text", builder.toString()).put("color", getColor(left));
+        newAttachment().put("text", builder.toString()).put("color", getColor(left));
     builder = new StringBuilder()
         .append(right.name())
         .append(" ")
@@ -388,7 +388,7 @@ public class DataSources {
         .append("\n")
         .append(right.oracleText());
     JSONObject rightJson =
-        new JSONObject().put("text", builder.toString()).put("color", getColor(right));
+        newAttachment().put("text", builder.toString()).put("color", getColor(right));
     return json.put("attachments", new JSONArray().put(leftJson).put(rightJson));
   }
 
@@ -400,25 +400,29 @@ public class DataSources {
     if (set == null) {
       throw new NoSuchElementException(setAbbreviation + " is not a valid set abbreviation");
     }
-    return newJsonObject().put("text", set);
+    return newTopJsonObj().put("text", set);
   }
 
   public JSONObject getGlossaryOrRuleEntry(String keywordOrParagraph) {
     keywordOrParagraph = keywordOrParagraph.toLowerCase();
     String entry = allRules.get(keywordOrParagraph);
     if (entry != null) {
-      return newJsonObject().put("text", entry);
+      return newTopJsonObj().put("text", entry);
     }
     for (Entry<String, String> ruleEntry : allRules.entrySet()) {
       if (ruleEntry.getKey().contains(keywordOrParagraph)) {
-        return newJsonObject().put("text", ruleEntry.getValue());
+        return newTopJsonObj().put("text", ruleEntry.getValue());
       }
     }
     throw new NoSuchElementException("No entry for " + keywordOrParagraph);
   }
 
-  private static JSONObject newJsonObject() {
+  private static JSONObject newTopJsonObj() {
     return new JSONObject().put("response_type", "in_channel");
+  }
+
+  private static JSONObject newAttachment() {
+    return new JSONObject().put("mrkdwn_in", new JSONArray().put("text").put("pretext"));
   }
 
   private static String getColor(Card card) {
