@@ -47,7 +47,7 @@ public class SetUtils {
       }
     }
     if (code.length() == 3 && !name.isEmpty() && !releaseDate.isEmpty()) {
-      builder.put(code, name + " " + releaseDate);
+      builder.put(code.toLowerCase(), name + " " + releaseDate);
     }
     reader.endObject();
   }

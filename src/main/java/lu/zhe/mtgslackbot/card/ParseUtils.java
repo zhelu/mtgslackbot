@@ -1,5 +1,6 @@
 package lu.zhe.mtgslackbot.card;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -20,11 +21,14 @@ public class ParseUtils {
     // Disable instantiation
   }
 
+  private static final Joiner JOINER = Joiner.on("|");
+
   /**
    * Parses a mapping of {@link Card} objects mapped to a canonical name.
    */
-  public static Map<String, Card> parseCards(InputStream is)
+  public static Map<String, Card> parseCards(InputStream is, List<String> abilityWordSet)
       throws IOException {
+    String abilityWordPattern = "(" + JOINER.join(abilityWordSet) + ")";
     ImmutableMap.Builder<String, Card> allCards = ImmutableMap.builder();
     JsonReader reader = new JsonReader(new InputStreamReader(is, "UTF-8"));
     reader.beginObject();
@@ -32,7 +36,7 @@ public class ParseUtils {
       String name = reader.nextName().toLowerCase();
       String canonicalName = CardUtils.canonicalizeName(name);
       try {
-        Card card = readCard(reader);
+        Card card = readCard(reader, abilityWordPattern);
         if (card != null) {
           allCards.put(canonicalName, card);
         }
@@ -44,7 +48,7 @@ public class ParseUtils {
     return allCards.build();
   }
 
-  private static Card readCard(JsonReader reader) throws IOException {
+  private static Card readCard(JsonReader reader, String abilityWordPattern) throws IOException {
     String name = null;
     String layout = null;
     List<String> sets = ImmutableList.of();
@@ -109,7 +113,8 @@ public class ParseUtils {
           manaCost = substituteSymbols(reader.nextString());
           break;
         case "text":
-          oracleText = substituteSymbols(reader.nextString());
+          oracleText =
+              substituteAbilityWords(substituteSymbols(reader.nextString()), abilityWordPattern);
           break;
         case "power":
           power = reader.nextString();
@@ -237,6 +242,10 @@ public class ParseUtils {
     }
     reader.endArray();
     return rulings.build();
+  }
+
+  private static String substituteAbilityWords(String text, String pattern) {
+    return text.replaceAll(pattern + " \u2014", "_$1_ \u2014");
   }
 
   private static String substituteSymbols(String text) {

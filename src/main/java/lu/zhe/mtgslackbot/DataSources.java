@@ -396,9 +396,9 @@ public class DataSources {
    * Gets the display text for a set given its set abbreviation.
    */
   public JSONObject getSet(String setAbbreviation) {
-    String set = allSets.get(setAbbreviation);
+    String set = allSets.get(setAbbreviation.toLowerCase());
     if (set == null) {
-      throw new NoSuchElementException(set + " is not a valid set abbreviation");
+      throw new NoSuchElementException(setAbbreviation + " is not a valid set abbreviation");
     }
     return newJsonObject().put("text", set);
   }
