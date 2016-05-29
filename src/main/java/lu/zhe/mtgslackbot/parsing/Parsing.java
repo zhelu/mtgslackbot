@@ -20,7 +20,9 @@ import java.util.regex.Pattern;
 import lu.zhe.mtgslackbot.card.Card;
 import lu.zhe.mtgslackbot.card.CardUtils;
 import lu.zhe.mtgslackbot.card.Color;
+import lu.zhe.mtgslackbot.card.Format;
 import lu.zhe.mtgslackbot.card.Layout;
+import lu.zhe.mtgslackbot.card.Legality;
 
 import javax.annotation.Nullable;
 
@@ -40,7 +42,7 @@ public class Parsing {
   private static final Joiner PIPE_JOINER = Joiner.on("|");
   private static final Pattern TOKENIZER =
       Pattern.compile(
-          "(?<command>" + PIPE_JOINER.join(COMMANDS) + ")\\s(?<args>.*)");
+          "(?<command>" + PIPE_JOINER.join(COMMANDS) + ")(\\s(?<args>.*))?");
   private static final Pattern WHOLE_PREDICATE =
       Pattern.compile("([a-z!]+(" + PIPE_JOINER.join(OPS) + ")\"[^\"]*\"|" +
          "([a-z!]+(" + PIPE_JOINER.join(OPS) + ")\\S+))");
@@ -125,7 +127,7 @@ public class Parsing {
         case HELP:
           return ParsedInput.create(
               command,
-              args,
+              args == null ? "" : args,
               ImmutableList.<Predicate<Card>>of());
         case SEARCH:
           // fall through intended
@@ -133,8 +135,10 @@ public class Parsing {
           // fall through intended
         case RANDOM:
           List<Predicate<Card>> predicates = new ArrayList<>();
+          if (args == null) {
+            return ParsedInput.create(command, "", ImmutableList.of(Predicates.<Card>alwaysTrue()));
+          }
           Matcher preds = WHOLE_PREDICATE.matcher(args);
-          int i = 0;
           while (preds.find()) {
             String group = preds.group();
             Matcher argMatcher = PREDICATE_TOKENIZER.matcher(group);
@@ -353,6 +357,44 @@ public class Parsing {
                     return false;
                   }
                   continue;
+              }
+            }
+            return true;
+          }
+        };
+      }
+    });
+    builder.put("f", ":", new Function<String, Predicate<Card>>() {
+      @Override
+      public Predicate<Card> apply(final String value) {
+        return new Predicate<Card>() {
+          @Override
+          public boolean apply(Card card) {
+            for (int i = 0; i < value.length(); ++i) {
+              Format format;
+              switch(value.charAt(i)) {
+                case 's':
+                  format = Format.STANDARD;
+                  break;
+                case 'm':
+                  format = Format.MODERN;
+                  break;
+                case 'l':
+                  format = Format.LEGACY;
+                  break;
+                case 'v':
+                  format = Format.VINTAGE;
+                  break;
+                case 'c':
+                  format = Format.COMMANDER;
+                  break;
+                default:
+                  format = null;
+              }
+              Legality legality = card.legalities().get(format);
+              if (legality == null
+                  || (legality != Legality.LEGAL && legality != Legality.RESTRICTED)) {
+                return false;
               }
             }
             return true;

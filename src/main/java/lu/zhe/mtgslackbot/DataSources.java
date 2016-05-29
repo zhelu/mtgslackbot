@@ -23,6 +23,7 @@ import lu.zhe.mtgslackbot.card.CardUtils;
 import lu.zhe.mtgslackbot.card.Format;
 import lu.zhe.mtgslackbot.card.Layout;
 import lu.zhe.mtgslackbot.card.Legality;
+import lu.zhe.mtgslackbot.parsing.Parsing.Command;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 
 import org.json.JSONArray;
@@ -183,6 +184,28 @@ public class DataSources {
       case MOMIR:
         return newTopJsonObj().put("text", "not implemented");
       case HELP:
+        switch (arg) {
+          case "":
+            StringBuilder commands = new StringBuilder();
+            for (Command c : Command.values()) {
+              commands.append(c.toLowerCase() + " ");
+            }
+            return newTopJsonObj().put(
+                "text", "/mtg <command>\ncommands are: " + commands.toString().trim());
+          case "card":
+            return newTopJsonObj().put("text", "/mtg card <name>");
+          case "set":
+            return newTopJsonObj().put("text", "/mtg set <set abbreviation>");
+          case "search":
+            // fall through intended
+          case "count":
+            // fall through intended
+          case "random":
+            return newTopJsonObj().put("text",
+                "/mtg {search|count|random} <predicate 1> ...\n"
+                + "predicates:\n"
+                + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is");
+        }
         return newTopJsonObj().put("text", "not implemented");
       case RULE:
         return getGlossaryOrRuleEntry(arg);
