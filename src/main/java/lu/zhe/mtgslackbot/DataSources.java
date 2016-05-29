@@ -133,6 +133,12 @@ public class DataSources {
         {
           List<Card> matches = new ArrayList<>();
           for (Card candidate : allCards.values()) {
+            if (candidate.name().equals("Serra Angel")) {
+              System.out.println(predicates.size());
+              for (Predicate<Card> p : predicates) {
+                System.out.println(p.apply(candidate));
+              }
+            }
             if (predicate.apply(candidate)) {
               matches.add(candidate);
             }
@@ -400,7 +406,7 @@ public class DataSources {
     if (set == null) {
       throw new NoSuchElementException(setAbbreviation + " is not a valid set abbreviation");
     }
-    return newTopJsonObj().put("text", set);
+    return newTopJsonObj().put("text", set).put("mrkdwn", false);
   }
 
   public JSONObject getGlossaryOrRuleEntry(String keywordOrParagraph) {

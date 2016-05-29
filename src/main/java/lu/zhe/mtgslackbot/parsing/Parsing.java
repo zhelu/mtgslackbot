@@ -42,8 +42,8 @@ public class Parsing {
       Pattern.compile(
           "(?<command>" + PIPE_JOINER.join(COMMANDS) + ")\\s(?<args>.*)");
   private static final Pattern WHOLE_PREDICATE =
-      Pattern.compile("([a-z!]+(" + PIPE_JOINER.join(OPS) + ")(\"?)(.*)(\\2)|" +
-         "([a-z!]+(" + PIPE_JOINER.join(OPS) + ")[^ \"]+))");
+      Pattern.compile("([a-z!]+(" + PIPE_JOINER.join(OPS) + ")\"[^\"]*\"|" +
+         "([a-z!]+(" + PIPE_JOINER.join(OPS) + ")\\S+))");
   private static final Pattern PREDICATE_TOKENIZER =
       Pattern.compile(
           "(?:\\s*(?<var>[a-z!]+)"
@@ -134,8 +134,10 @@ public class Parsing {
         case RANDOM:
           List<Predicate<Card>> predicates = new ArrayList<>();
           Matcher preds = WHOLE_PREDICATE.matcher(args);
+          int i = 0;
           while (preds.find()) {
-            Matcher argMatcher = PREDICATE_TOKENIZER.matcher(preds.group());
+            String group = preds.group();
+            Matcher argMatcher = PREDICATE_TOKENIZER.matcher(group);
             argMatcher.find();
             String var = argMatcher.group("var");
             String op = argMatcher.group("op");
@@ -391,6 +393,8 @@ public class Parsing {
                     return false;
                   }
                   continue;
+                default:
+                  throw new IllegalArgumentException("Unknown color filter");
               }
             }
             return true;
