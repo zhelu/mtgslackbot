@@ -188,7 +188,7 @@ public class DataSources {
           case "":
             StringBuilder commands = new StringBuilder();
             for (Command c : Command.values()) {
-              commands.append(c.toLowerCase() + " ");
+              commands.append(c.toString().toLowerCase() + " ");
             }
             return newTopJsonObj().put(
                 "text", "/mtg <command>\ncommands are: " + commands.toString().trim());
