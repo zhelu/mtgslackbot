@@ -13,10 +13,12 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import lu.zhe.mtgslackbot.card.Card;
 import lu.zhe.mtgslackbot.card.CardUtils;
@@ -161,28 +163,111 @@ public class DataSources {
         }
       case RANDOM:
         {
-          List<Card> matches = new ArrayList<>();
-          for (Card candidate : allCards.values()) {
-            if (predicate.apply(candidate)) {
-              matches.add(candidate);
-            }
-          }
-          if (!matches.isEmpty()) {
-            Card c = matches.get(random.nextInt(matches.size()));
-            return getDisplayJson(c);
-          }
-          return newTopJsonObj().put("text", "No matches found");
+          Card c = getRandom(predicate);
+          return c == null ? newTopJsonObj().put("text", "No matches found") : getDisplayJson(c);
         }
       case SET:
         {
           return getSet(arg);
         }
       case JHOIRA:
-        return newTopJsonObj().put("text", "not implemented");
+        {
+          final String jhoiraType = arg.toLowerCase();
+          if (!jhoiraType.equals("instant") && !jhoiraType.equals("sorcery")) {
+            return newTopJsonObj().put("text", "jhoira command expands 'sorcery' or 'instant'");
+          }
+          Predicate<Card> p = new Predicate<Card>() {
+            @Override
+            public boolean apply(Card c) {
+              return c.types().contains(jhoiraType);
+            }
+          };
+          Set<Card> cards = new HashSet<>();
+          while (cards.size() < 3) {
+            cards.add(getRandom(p));
+          }
+          JSONArray attachments = new JSONArray();
+          for (Card r : cards) {
+            JSONArray cardAttachments = getDisplayJson(r).getJSONArray("attachments");
+            for (int i = 0; i < cardAttachments.length(); ++i) {
+              attachments.put(cardAttachments.getJSONObject(i));
+            }
+          }
+          return newTopJsonObj().put("attachments", attachments);
+        }
       case MOJOS:
-        return newTopJsonObj().put("text", "not implemented");
+        {
+          int cmc;
+          try {
+            cmc = Integer.parseInt(arg);
+          } catch (NumberFormatException e) {
+            return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
+          }
+          final int cmcCopy = cmc;
+          if (cmc < 0) {
+            return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
+          }
+          Predicate<Card> p = new Predicate<Card>() {
+            @Override
+            public boolean apply(Card c) {
+              if (c.layout() == Layout.FLIP || c.layout() == Layout.DOUBLE_FACED) {
+                if (!c.name().equals(c.names().get(0))) {
+                  return false;
+                }
+              }
+              return c.types().contains("creature") && c.cmc() == cmcCopy;
+            }
+          };
+          Card creature = getRandom(p);
+          Predicate<Card> equip = new Predicate<Card>() {
+            @Override
+            public boolean apply(Card c) {
+              if (c.layout() == Layout.FLIP || c.layout() == Layout.DOUBLE_FACED) {
+                if (!c.name().equals(c.names().get(0))) {
+                  return false;
+                }
+              }
+              return c.subtypes().contains("equipment") && c.cmc() < cmcCopy;
+            }
+          };
+          Card equipment = getRandom(equip);
+          JSONObject json = getDisplayJson(creature);
+          if (equipment != null) {
+            JSONArray equipmentAttachments = getDisplayJson(equipment).getJSONArray("attachments");
+            for (int i = 0; i < equipmentAttachments.length(); ++i) {
+              json.getJSONArray("attachments").put(equipmentAttachments.getJSONObject(i));
+            }
+          }
+          return json;
+        }
       case MOMIR:
-        return newTopJsonObj().put("text", "not implemented");
+        {
+          int cmc;
+          try {
+            cmc = Integer.parseInt(arg);
+          } catch (NumberFormatException e) {
+            return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
+          }
+          final int cmcCopy = cmc;
+          if (cmc < 0) {
+            return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
+          }
+          Predicate<Card> p = new Predicate<Card>() {
+            @Override
+            public boolean apply(Card c) {
+              if (c.layout() == Layout.FLIP || c.layout() == Layout.DOUBLE_FACED) {
+                if (!c.name().equals(c.names().get(0))) {
+                  return false;
+                }
+              }
+              return c.types().contains("creature") && c.cmc() == cmcCopy;
+            }
+          };
+          Card momir = getRandom(p);
+          return momir == null
+              ? newTopJsonObj().put("text", "no cards at cmc " + cmc)
+              : getDisplayJson(momir);
+        }
       case HELP:
         switch (arg) {
           case "":
@@ -212,6 +297,19 @@ public class DataSources {
       default:
         return newTopJsonObj().put("text", "not implemented");
     }
+  }
+
+  private Card getRandom(Predicate<Card> predicate) {
+    List<Card> matches = new ArrayList<>();
+    for (Card candidate : allCards.values()) {
+      if (predicate.apply(candidate)) {
+        matches.add(candidate);
+      }
+    }
+    if (!matches.isEmpty()) {
+      return matches.get(random.nextInt(matches.size()));
+    }
+    return null;
   }
 
   private static JSONObject getTopList(List<Card> cards) {
@@ -373,17 +471,6 @@ public class DataSources {
     Card left = allCards.get(names.get(0));
     Card right = allCards.get(names.get(1));
     StringBuilder builder = new StringBuilder();
-    JSONObject json = newTopJsonObj();
-    builder
-        .append(left.name())
-        .append(" // ")
-        .append(right.name())
-        .append(" (SPLIT CARD)")
-        .append(" | ")
-        .append(getLegality(left))
-        .append(" ")
-        .append(COMMA_JOINER.join(left.printings()));
-    json.put("text", builder.toString());
     builder = new StringBuilder()
         .append(left.name())
         .append(" ")
@@ -418,7 +505,18 @@ public class DataSources {
         .append(right.oracleText());
     JSONObject rightJson =
         newAttachment().put("text", builder.toString()).put("color", getColor(right));
-    return json.put("attachments", new JSONArray().put(leftJson).put(rightJson));
+    JSONObject json = newTopJsonObj();
+    builder = new StringBuilder()
+        .append(left.name())
+        .append(" // ")
+        .append(right.name())
+        .append(" (SPLIT CARD)")
+        .append(" | ")
+        .append(getLegality(left))
+        .append(" ")
+        .append(COMMA_JOINER.join(left.printings()));
+    JSONObject header = newAttachment().put("text", builder.toString());
+    return json.put("attachments", new JSONArray().put(header).put(leftJson).put(rightJson));
   }
 
   /**
@@ -458,7 +556,7 @@ public class DataSources {
     if (card.colors().size() > 1) {
       return "#EEEE00";
     } else if (card.colors().isEmpty()) {
-      return card.types().contains("equipment") ? "#884444" : "#BBBBBB";
+      return card.types().contains("artifact") ? "#884444" : "#BBBBBB";
     }
     switch (card.colors().iterator().next()) {
       case WHITE:
