@@ -179,6 +179,9 @@ public class DataSources {
           Predicate<Card> p = new Predicate<Card>() {
             @Override
             public boolean apply(Card c) {
+              if (!isLegal(c)) {
+                return false;
+              }
               return c.types().contains(jhoiraType);
             }
           };
@@ -214,6 +217,9 @@ public class DataSources {
                 if (!c.name().equals(c.names().get(0))) {
                   return false;
                 }
+              }
+              if (!isLegal(c)) {
+                return false;
               }
               return c.types().contains("creature") && c.cmc() == cmcCopy;
             }
@@ -259,6 +265,9 @@ public class DataSources {
                 if (!c.name().equals(c.names().get(0))) {
                   return false;
                 }
+              }
+              if (!isLegal(c)) {
+                return false;
               }
               return c.types().contains("creature") && c.cmc() == cmcCopy;
             }
@@ -549,7 +558,9 @@ public class DataSources {
   }
 
   private static JSONObject newAttachment() {
-    return new JSONObject().put("mrkdwn_in", new JSONArray().put("text").put("pretext"));
+    return new JSONObject()
+        .put("mrkdwn_in", new JSONArray().put("text").put("pretext"))
+        .put("fallback", "mtgslackbot");
   }
 
   private static String getColor(Card card) {
@@ -571,5 +582,15 @@ public class DataSources {
         return "#00AA00";
     }
     throw new IllegalStateException("unknown color information");
+  }
+
+  private static boolean isLegal(Card card) {
+    for (Format format : FORMATS) {
+      Legality legality = card.legalities().get(format);
+      if (legality == Legality.LEGAL || legality == Legality.RESTRICTED) {
+        return true;
+      }
+    }
+    return false;
   }
 }
