@@ -5,7 +5,7 @@
 ### Build serialied resources
 
 ```shell
-bazel build src/main/java/lu/zhe/mtgslackbot:BuildResources $absolute_path_to_java/lu/zhe/mtgslackbot/res$
+bazel run src/main/java/lu/zhe/mtgslackbot:BuildResources -- $absolute_path_to_java/lu/zhe/mtgslackbot/res$
 ```
 
 ## Deploying
