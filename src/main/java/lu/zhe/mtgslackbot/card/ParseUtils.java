@@ -114,13 +114,15 @@ public class ParseUtils {
           break;
         case "text":
           oracleText =
-              substituteAbilityWords(substituteSymbols(reader.nextString()), abilityWordPattern);
+              substituteAsterisk(
+                  substituteAbilityWords(
+                      substituteSymbols(reader.nextString()), abilityWordPattern));
           break;
         case "power":
-          power = reader.nextString();
+          power = substituteAsterisk(reader.nextString());
           break;
         case "toughness":
-          toughness = reader.nextString();
+          toughness = substituteAsterisk(reader.nextString());
           break;
         case "loyalty":
           loyalty = reader.nextInt();
@@ -242,6 +244,10 @@ public class ParseUtils {
     }
     reader.endArray();
     return rulings.build();
+  }
+
+  private static String substituteAsterisk(String text) {
+    return text.replaceAll("\\*", "\uFF0A");
   }
 
   private static String substituteAbilityWords(String text, String pattern) {

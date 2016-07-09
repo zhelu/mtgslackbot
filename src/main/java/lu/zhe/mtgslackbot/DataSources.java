@@ -174,7 +174,7 @@ public class DataSources {
         {
           final String jhoiraType = arg.toLowerCase();
           if (!jhoiraType.equals("instant") && !jhoiraType.equals("sorcery")) {
-            return newTopJsonObj().put("text", "jhoira command expands 'sorcery' or 'instant'");
+            return newTopJsonObj().put("text", "jhoira command expects 'sorcery' or 'instant'");
           }
           Predicate<Card> p = new Predicate<Card>() {
             @Override
