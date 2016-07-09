@@ -247,7 +247,7 @@ public class ParseUtils {
   }
 
   private static String substituteAsterisk(String text) {
-    return text.replaceAll("\\*", "\uFF0A");
+    return text.replaceAll("\\*", "\u2217");
   }
 
   private static String substituteAbilityWords(String text, String pattern) {

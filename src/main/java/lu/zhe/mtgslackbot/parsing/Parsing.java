@@ -145,7 +145,7 @@ public class Parsing {
             argMatcher.find();
             String var = argMatcher.group("var");
             String op = argMatcher.group("op");
-            String val = argMatcher.group("val");
+            String val = substituteAsterisk(argMatcher.group("val"));
             Function<String, Predicate<Card>> f = PREDICATE_TABLE.get(var, op);
             if (f == null) {
               throw new IllegalArgumentException("Unprocessed arg: " + var + op + val);
@@ -656,5 +656,9 @@ public class Parsing {
       default:
         return Predicates.alwaysFalse();
     }
+  }
+
+  private static String substituteAsterisk(String text) {
+    return text.replaceAll("\\*", "\u2217");
   }
 }
