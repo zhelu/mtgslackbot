@@ -40,6 +40,7 @@ public class DataSources {
   private static final SecureRandom random = new SecureRandom();
 
   private static final Joiner SEMICOLON_JOINER = Joiner.on("; ");
+  private static final Joiner NEWLINE_JOINER = Joiner.on("\n");
   private static final Function<Card, String> NAME_GETTER = new Function<Card, String>() {
     @Override
     public String apply(Card card) {
@@ -123,6 +124,35 @@ public class DataSources {
           }
           if (anyMatch.size() == 1) {
             return getDisplayJson(anyMatch.get(0));
+          }
+          if (!prefixMatch.isEmpty()) {
+            return getTopList(prefixMatch);
+          }
+          if (!anyMatch.isEmpty()) {
+            return getTopList(anyMatch);
+          }
+          return newTopJsonObj().put("text", "No matches found");
+        }
+      case RULING:
+        {
+          Card card = allCards.get(arg);
+          if (card != null) {
+            return getRulingJson(card);
+          }
+          List<Card> prefixMatch = new ArrayList<>();
+          List<Card> anyMatch = new ArrayList<>();
+          for (Entry<String, Card> candidate : allCards.entrySet()) {
+            if (candidate.getKey().startsWith(arg)) {
+              prefixMatch.add(candidate.getValue());
+            } else if (candidate.getKey().contains(arg)) {
+              anyMatch.add(candidate.getValue());
+            }
+          }
+          if (prefixMatch.size() == 1) {
+            return getRulingJson(prefixMatch.get(0));
+          }
+          if (anyMatch.size() == 1) {
+            return getRulingJson(anyMatch.get(0));
           }
           if (!prefixMatch.isEmpty()) {
             return getTopList(prefixMatch);
@@ -288,6 +318,8 @@ public class DataSources {
                 "text", "/mtg <command>\ncommands are: " + commands.toString().trim());
           case "card":
             return newTopJsonObj().put("text", "/mtg card <name>");
+          case "ruling":
+            return newTopJsonObj().put("text", "/mtg ruling <name>");
           case "set":
             return newTopJsonObj().put("text", "/mtg set <set abbreviation>");
           case "search":
@@ -338,6 +370,16 @@ public class DataSources {
       return newTopJsonObj().put("text", result);
     }
     return newTopJsonObj().put("text", result + " plus " + extras + " others");
+  }
+
+  /**
+   * Gets the rulings for card in json form.
+   */
+  public JSONObject getRulingJson(Card card) {
+    if (card.rulings().isEmpty()) {
+      return newTopJsonObj().put("text", "no rulings");
+    }
+    return newTopJsonObj().put("text", NEWLINE_JOINER.join(card.rulings()));
   }
 
   /**

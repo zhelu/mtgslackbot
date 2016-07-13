@@ -109,6 +109,8 @@ public class Parsing {
       Command command = Command.valueOf(m.group("command").toUpperCase());
       String args = m.group("args");
       switch (command) {
+        case RULING:
+          // fall through intended
         case CARD:
           return ParsedInput.create(
               command,
@@ -183,6 +185,7 @@ public class Parsing {
     MOJOS,
     MOMIR,
     RULE,
+    RULING,
     HELP;
   }
 

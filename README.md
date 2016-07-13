@@ -24,5 +24,5 @@ git push heroku master
 
 ### Manual testing
 ```shell
-blaze run src/main/java/lu/zhe/mtgslackbot:Tester -- card emrakul the
+bazel run src/main/java/lu/zhe/mtgslackbot:Tester -- card emrakul the
 ```
