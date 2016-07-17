@@ -12,6 +12,16 @@ java_library(
 )
 
 java_library(
+    name = "mtgslackbot",
+    srcs = ["MtgSlackbot.java"],
+    deps = [
+        "//src/main/java/lu/zhe/mtgslackbot:data_sources",
+        "//src/main/java/lu/zhe/mtgslackbot/parsing",
+        "@com_sparkjava_spark_2_2//jar",
+    ],
+)
+
+java_library(
     name = "data_sources",
     srcs = ["DataSources.java"],
     deps = [
@@ -45,4 +55,18 @@ java_binary(
     name = "Tester",
     runtime_deps = [":tester",],
     main_class = "lu.zhe.mtgslackbot.Tester",
+)
+
+java_binary(
+    name = "MtgSlackbot",
+    runtime_deps = [
+        ":mtgslackbot",
+        "@javax_servlet_api_3_1_0//jar",
+        "@org_slf4j_slf4j_api_1_6_6//jar",
+        "@org_eclipse_jetty_http_9_3_10//jar",
+        "@org_eclipse_jetty_io_9_3_10//jar",
+        "@org_eclipse_jetty_server_9_3_10//jar",
+        "@org_eclipse_jetty_util_9_3_10//jar",
+    ],
+    main_class = "lu.zhe.mtgslackbot.MtgSlackbot",
 )

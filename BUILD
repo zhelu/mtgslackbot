@@ -66,3 +66,59 @@ java_library(
     exports = ["//external:auto_value-jar"],
     exported_plugins = [":auto_plugin"],
 )
+
+java_library(
+    name = "com_sparkjava_spark_2_2",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@com_sparkjava_spark_2_2//jar",
+    ],
+) 
+
+java_library(
+    name = "org_slf4j_slf4j_api_1_6_6",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_slf4j_slf4j_api_1_6_6//jar",
+    ],
+)
+
+java_library(
+    name = "javax_servlet_api_3_1_0",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@javax_servlet_api_3_1_0//jar",
+    ],
+)
+
+java_library(
+    name = "org_eclipse_jetty_server_9_3_10",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_eclipse_jetty_server_9_3_10//jar",
+    ],
+)
+
+java_library(
+    name = "org_eclipse_jetty_util_9_3_10",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_eclipse_jetty_util_9_3_10//jar",
+    ],
+)
+
+java_library(
+    name = "org_eclipse_jetty_http_9_3_10",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_eclipse_jetty_http_9_3_10//jar",
+    ],
+)
+
+java_library(
+    name = "org_eclipse_jetty_io_9_3_10",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_eclipse_jetty_io_9_3_10//jar",
+    ],
+)

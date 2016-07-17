@@ -46,3 +46,38 @@ bind(
     name = "auto_value-jar",
     actual = "@auto_value//jar"
 )
+
+maven_jar(
+    name = "com_sparkjava_spark_2_2",
+    artifact = "com.sparkjava:spark-core:2.2",
+) 
+
+maven_jar(
+    name = "org_slf4j_slf4j_api_1_6_6",
+    artifact = "org.slf4j:slf4j-api:1.6.6",
+)
+
+maven_jar(
+    name = "javax_servlet_api_3_1_0",
+    artifact = "javax.servlet:javax.servlet-api:3.1.0",
+)
+
+maven_jar(
+    name = "org_eclipse_jetty_server_9_3_10",
+    artifact = "org.eclipse.jetty:jetty-server:9.3.10.v20160621",
+)
+
+maven_jar(
+    name = "org_eclipse_jetty_util_9_3_10",
+    artifact = "org.eclipse.jetty:jetty-util:9.3.10.v20160621",
+)
+
+maven_jar(
+    name = "org_eclipse_jetty_http_9_3_10",
+    artifact = "org.eclipse.jetty:jetty-http:9.3.10.v20160621",
+)
+
+maven_jar(
+    name = "org_eclipse_jetty_io_9_3_10",
+    artifact = "org.eclipse.jetty:jetty-io:9.3.10.v20160621",
+)
