@@ -267,7 +267,7 @@ public class DataSources {
             }
           };
           Card equipment = getRandom(equip);
-          JSONObject json = getDisplayJson(creature);
+          JSONObject json = getShortDisplayJson(creature);
           if (equipment != null) {
             JSONArray equipmentAttachments = getDisplayJson(equipment).getJSONArray("attachments");
             for (int i = 0; i < equipmentAttachments.length(); ++i) {
@@ -305,7 +305,7 @@ public class DataSources {
           Card momir = getRandom(p);
           return momir == null
               ? newTopJsonObj().put("text", "no cards at cmc " + cmc)
-              : getDisplayJson(momir);
+              : getShortDisplayJson(momir);
         }
       case HELP:
         switch (arg) {
@@ -393,6 +393,24 @@ public class DataSources {
     return getDisplayJson(card);
   }
 
+  public JSONObject getShortDisplayJson(Card card) {
+    Layout layout = card.layout();
+    switch (layout) {
+      case NORMAL:
+        return getNormalDisplayJson(card);
+      case DOUBLE_FACED:
+        return getNormalDisplayJson(card);
+      case SPLIT:
+        return getSplitDisplayJson(card);
+      case FLIP:
+        return getFlipDoubleDisplayJson(card, "FLIPS");
+      case MELD:
+        return getNormalDisplayJson(card);
+      default:
+        throw new IllegalArgumentException("Unknown layout: " + layout);
+    }
+  }
+
   /**
    * Gets the display json for a {@link Card}.
    */
@@ -407,6 +425,8 @@ public class DataSources {
         return getSplitDisplayJson(card);
       case FLIP:
         return getFlipDoubleDisplayJson(card, "FLIPS");
+      case MELD:
+        return getMeldDisplayJson(card);
       default:
         throw new IllegalArgumentException("Unknown layout: " + layout);
     }
@@ -515,6 +535,74 @@ public class DataSources {
         .put("pretext", flipsOrTransforms + " INTO:");
     return newTopJsonObj()
         .put("attachments", new JSONArray().put(frontJson).put(backJson));
+  }
+
+  /**
+   * Returns json representation for a meld card.
+   */
+  private JSONObject getMeldDisplayJson(Card card) {
+    List<String> names = card.names();
+    Card card1 = allCards.get(names.get(0));
+    Card card2 = allCards.get(names.get(1));
+    Card meld = allCards.get(names.get(2));
+    StringBuilder builder = new StringBuilder();
+    builder
+        .append(card1.name())
+        .append(" ")
+        .append(card1.manaCost())
+        .append(" || ")
+        .append(card1.type());
+    if (!card1.power().isEmpty() && !card1.toughness().isEmpty()) {
+      builder.append(" ").append(card1.power()).append("/").append(card1.toughness());
+    }
+    if (card1.loyalty() != null) {
+      builder.append(" <").append(card1.loyalty()).append(">");
+    }
+    builder
+        .append(" | ")
+        .append(getLegality(card1))
+        .append(" ")
+        .append(COMMA_JOINER.join(card1.printings()))
+        .append("\n")
+        .append(card1.oracleText());
+    JSONObject card1Json =
+        newAttachment().put("text", builder.toString()).put("color", getColor(card1));
+    builder = new StringBuilder()
+        .append(card2.name())
+        .append(" || ")
+        .append(card2.type());
+    if (!card2.power().isEmpty() && !card2.toughness().isEmpty()) {
+      builder.append(" ").append(card2.power()).append("/").append(card2.toughness());
+    }
+    if (card2.loyalty() != null) {
+      builder.append(" <").append(card2.loyalty()).append(">");
+    }
+    builder
+        .append("\n")
+        .append(card2.oracleText());
+    JSONObject card2Json = newAttachment()
+        .put("text", builder.toString())
+        .put("color", getColor(card2))
+        .put("pretext", "AND");
+    builder = new StringBuilder()
+        .append(meld.name())
+        .append(" || ")
+        .append(meld.type());
+    if (!meld.power().isEmpty() && !meld.toughness().isEmpty()) {
+      builder.append(" ").append(meld.power()).append("/").append(meld.toughness());
+    }
+    if (meld.loyalty() != null) {
+      builder.append(" <").append(meld.loyalty()).append(">");
+    }
+    builder
+        .append("\n")
+        .append(meld.oracleText());
+    JSONObject meldJson = newAttachment()
+        .put("text", builder.toString())
+        .put("color", getColor(meld))
+        .put("pretext", "MELD INTO:");
+    return newTopJsonObj()
+        .put("attachments", new JSONArray().put(card1Json).put(card2Json).put(meldJson));
   }
 
   private JSONObject getSplitDisplayJson(Card card) {
