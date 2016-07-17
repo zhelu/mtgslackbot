@@ -569,6 +569,8 @@ public class DataSources {
         newAttachment().put("text", builder.toString()).put("color", getColor(card1));
     builder = new StringBuilder()
         .append(card2.name())
+        .append(" ")
+        .append(card2.manaCost())
         .append(" || ")
         .append(card2.type());
     if (!card2.power().isEmpty() && !card2.toughness().isEmpty()) {
