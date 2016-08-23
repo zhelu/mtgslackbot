@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  */
 public class Resources {
   private static final Pattern RULES_URL_PATTERN = Pattern.compile(
-      ".*(?<url>http://media.wizards.com/\\d+/docs/MagicCompRules_\\d+.txt).*");
+      ".*(?<url>http://media.wizards.com/\\d+/docs/MagicCompRules_.+\\.txt).*");
 
   private Resources(String path, boolean debug) {
     System.setProperty("http.agent", "mtgslackbot");
@@ -35,7 +35,7 @@ public class Resources {
       long start = System.currentTimeMillis();
       Scanner pageScanner =
           new Scanner(new URL(
-              "http://magic.wizards.com/en/gameinfo/gameplay/formats/comprehensiverules")
+              "http://magic.wizards.com/en/game-info/gameplay/rules-and-formats/rules")
               .openStream());
       String rulesUrl = "";
       while (pageScanner.hasNextLine()) {
@@ -47,7 +47,7 @@ public class Resources {
         }
       }
       pageScanner.close();
-      Scanner sc = new Scanner(new URL(rulesUrl).openStream(), "ISO-8859-1");
+      Scanner sc = new Scanner(new URL(rulesUrl).openStream(), "UTF-16");
       allRules = RuleUtils.parseRules(sc);
       System.out.println("Rule entries: " + allRules.size());
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");

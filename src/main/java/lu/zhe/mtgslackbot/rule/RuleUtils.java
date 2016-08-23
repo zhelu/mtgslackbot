@@ -57,7 +57,6 @@ public class RuleUtils {
           continue;
         }
         if (!m.matches() && !line.startsWith("Example: ") && !line.startsWith("  ")) {
-          System.out.println(line);
         }
         if (line.startsWith("Example: ") || line.startsWith("  ")) {
           if (lastParagraph == null) {
