@@ -122,12 +122,10 @@ public class DataSources {
           if (prefixMatch.size() == 1) {
             return getDisplayJson(prefixMatch.get(0));
           }
-          if (anyMatch.size() == 1) {
+          if (prefixMatch.isEmpty() && anyMatch.size() == 1) {
             return getDisplayJson(anyMatch.get(0));
           }
-          if (!prefixMatch.isEmpty()) {
-            return getTopList(prefixMatch);
-          }
+          anyMatch.addAll(prefixMatch);
           if (!anyMatch.isEmpty()) {
             return getTopList(anyMatch);
           }
@@ -166,12 +164,6 @@ public class DataSources {
         {
           List<Card> matches = new ArrayList<>();
           for (Card candidate : allCards.values()) {
-            if (candidate.name().equals("Serra Angel")) {
-              System.out.println(predicates.size());
-              for (Predicate<Card> p : predicates) {
-                System.out.println(p.apply(candidate));
-              }
-            }
             if (predicate.apply(candidate)) {
               matches.add(candidate);
             }
@@ -315,13 +307,13 @@ public class DataSources {
               commands.append(c.toString().toLowerCase() + " ");
             }
             return newTopJsonObj().put(
-                "text", "/mtg <command>\ncommands are: " + commands.toString().trim());
+                "text", "/mtg <command>\ncommands are: " + commands.toString().trim()).put("mrkdown", "false");
           case "card":
-            return newTopJsonObj().put("text", "/mtg card <name>");
+            return newTopJsonObj().put("text", "/mtg card <name>").put("mrkdown", "false");
           case "ruling":
-            return newTopJsonObj().put("text", "/mtg ruling <name>");
+            return newTopJsonObj().put("text", "/mtg ruling <name>").put("mrkdown", "false");
           case "set":
-            return newTopJsonObj().put("text", "/mtg set <set abbreviation>");
+            return newTopJsonObj().put("text", "/mtg set <set abbreviation>").put("mrkdown", "false");
           case "search":
             // fall through intended
           case "count":
@@ -330,9 +322,9 @@ public class DataSources {
             return newTopJsonObj().put("text",
                 "/mtg {search|count|random} <predicate 1> ...\n"
                 + "predicates:\n"
-                + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is");
+                + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is").put("mrkdown", "false");
         }
-        return newTopJsonObj().put("text", "not implemented");
+        return newTopJsonObj().put("text", "not implemented").put("mrkdown", "false");
       case RULE:
         return getGlossaryOrRuleEntry(arg);
       default:

@@ -600,7 +600,7 @@ public class Parsing {
 
   private static Predicate<Card> getTextPredicate(final String regexp) {
     return new Predicate<Card>() {
-      private final Pattern p = Pattern.compile(".*" + regexp + ".*");
+      private final Pattern p = Pattern.compile(".*" + regexp);
       @Override
       public boolean apply(Card card) {
         return p.matcher(card.oracleText().toLowerCase().replaceAll("\n", "")).matches();
