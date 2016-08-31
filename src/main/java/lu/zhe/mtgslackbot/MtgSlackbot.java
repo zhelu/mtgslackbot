@@ -1,5 +1,6 @@
 package lu.zhe.mtgslackbot;
 
+import static spark.Spark.get;
 import static spark.Spark.port;
 import static spark.Spark.post;
 
