@@ -50,9 +50,6 @@ public class MtgSlackbot {
         return "Not authorized";
       }
       response.type("application/json");
-      if (keepAliveMs > 0) {
-        registerKeepAlive();
-      }
       return process(request.queryParams("text"));
     });
   }
