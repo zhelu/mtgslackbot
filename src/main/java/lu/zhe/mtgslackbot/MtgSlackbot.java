@@ -27,15 +27,15 @@ public class MtgSlackbot {
   private final String token;
   // Send a query to self in this many millis (if positive)
   private final int keepAliveMs;
-  private final String keepAliveUrl;
+  private final String appname;
   // Guarded by this.
   private TimerTask timerTask;
 
-  private MtgSlackbot(int serverPort, String token, int keepAliveMs, String selfhost) {
+  private MtgSlackbot(int serverPort, String token, int keepAliveMs, String keepAliveUrl) {
     this.serverPort = serverPort;
     this.token = token;
     this.keepAliveMs = keepAliveMs;
-    this.keepAliveUrl = selfhost;
+    this.keepAliveUrl = keepAliveUrl;
   }
 
   private void start() {
@@ -104,8 +104,10 @@ public class MtgSlackbot {
     int keepaliveMs = System.getenv("keepalive") == null
         ? 0
         : Integer.valueOf(System.getenv("keepalive")) * 60 * 1000;
-    String selfhost = System.getenv("selfhost");
+    String selfhost = System.getenv("appname") == null
+        ? null
+        : "http://" + System.getenv("appname") + ".herokuapp.com/keepalive";
 
-    new MtgSlackbot(serverPort, token, keepaliveMs, selfhost).start();
+    new MtgSlackbot(serverPort, token, keepaliveMs, appname).start();
   }
 }
