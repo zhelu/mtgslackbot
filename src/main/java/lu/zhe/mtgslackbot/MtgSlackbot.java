@@ -38,6 +38,11 @@ public class MtgSlackbot {
   private void start() {
     port(serverPort);
 
+    get("/keepalive", (request, response) -> {
+      response.status(200);
+      return "keepalive";
+    });
+
     post("/", (request, response) -> {
       if (!request.queryParams("token").equals(token)) {
         response.status(401);
