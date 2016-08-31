@@ -12,9 +12,29 @@ import org.json.JSONObject;
  * Main class that handles IO.
  */
 public class MtgSlackbot {
-  private final DataSources dataSources = new DataSources();
   private static final String RESPONSE_TEMPLATE =
       "{\"text\": \"%s\", \"response_type\": \"in_channel\"}";
+  private final DataSources dataSources = new DataSources();
+  private final int serverPort;
+  private final String token;
+
+  MtgSlackbot(int serverPort, String token) {
+    this.serverPort = serverPort;
+    this.token = token;
+  }
+
+  private void start() {
+    port(serverPort);
+
+    post("/", (request, response) -> {
+      if (!request.queryParams("token").equals(token)) {
+        response.status(401);
+        return "Not authorized";
+      }
+      response.type("application/json");
+      return process(request.queryParams("text"));
+    });
+  }
 
   private String process(String input) {
     try {
@@ -26,19 +46,11 @@ public class MtgSlackbot {
   }
 
   public static void main(String[] args) {
-    final MtgSlackbot server = new MtgSlackbot();
+    int serverPort = System.getenv("PORT") == null
+        ? 8080
+        : Integer.valueOf(System.getenv("PORT"));
+    String token = System.getenv("token");
 
-    int serverPort = System.getenv("PORT") == null ? 8080 : Integer.valueOf(System.getenv("PORT"));
-
-    port(serverPort);
-
-    post("/", (request, response) -> {
-      if (!request.queryParams("token").equals(System.getenv("token"))) {
-        response.status(401);
-        return "Not authorized";
-      }
-      response.type("application/json");
-      return server.process(request.queryParams("text"));
-    });
+    new MtgSlackbot(serverPort, token).start();
   }
 }
