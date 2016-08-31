@@ -26,16 +26,13 @@ public class MtgSlackbot {
   private final String token;
   // Send a query to self in this many millis (if positive)
   private final int keepAliveMs;
-  // Send a keep alive query here
-  private final String selfHost;
   // Guarded by this.
   private TimerTask timerTask;
 
-  private MtgSlackbot(int serverPort, String token, int keepAliveMs, String selfHost) {
+  private MtgSlackbot(int serverPort, String token, int keepAliveMs) {
     this.serverPort = serverPort;
     this.token = token;
     this.keepAliveMs = keepAliveMs;
-    this.selfHost = selfHost;
   }
 
   private void start() {
@@ -47,7 +44,7 @@ public class MtgSlackbot {
         return "Not authorized";
       }
       response.type("application/json");
-      if (keepAliveMs > 0 && selfHost != null) {
+      if (keepAliveMs > 0) {
         registerKeepAlive();
       }
       return process(request.queryParams("text"));
@@ -58,12 +55,11 @@ public class MtgSlackbot {
     if (timerTask != null) {
       timerTask.cancel();
     }
-    System.out.println("registering keep-alive. will send in " + keepAliveMs + " ms.");
     timerTask = new TimerTask() {
       @Override
       public void run() {
         try {
-          URL url = new URL(selfHost);
+          URL url = new URL("localhost:" + serverPort);
           HttpURLConnection connection = (HttpURLConnection) url.openConnection();
           connection.setRequestMethod("POST");
           connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -73,7 +69,6 @@ public class MtgSlackbot {
           out.writeBytes(urlParameters);
           out.flush();
           out.close();
-          System.out.println("sending keep-alive");
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -99,7 +94,7 @@ public class MtgSlackbot {
     int keepaliveMs = System.getenv("keepalive") == null
         ? 0
         : Integer.valueOf(System.getenv("keepalive")) * 60 * 1000;
-    String selfHost = System.getenv("selfhost");
-    new MtgSlackbot(serverPort, token, keepaliveMs, selfHost).start();
+
+    new MtgSlackbot(serverPort, token, keepaliveMs).start();
   }
 }
