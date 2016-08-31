@@ -26,13 +26,16 @@ public class MtgSlackbot {
   private final String token;
   // Send a query to self in this many millis (if positive)
   private final int keepAliveMs;
+  // Send a keep alive query here
+  private final String selfHost;
   // Guarded by this.
   private TimerTask timerTask;
 
-  private MtgSlackbot(int serverPort, String token, int keepAliveMs) {
+  private MtgSlackbot(int serverPort, String token, int keepAliveMs, String selfHost) {
     this.serverPort = serverPort;
     this.token = token;
     this.keepAliveMs = keepAliveMs;
+    this.selfHost = selfHost;
   }
 
   private void start() {
@@ -44,7 +47,7 @@ public class MtgSlackbot {
         return "Not authorized";
       }
       response.type("application/json");
-      if (keepAliveMs > 0) {
+      if (keepAliveMs > 0 && selfHost != null) {
         registerKeepAlive();
       }
       return process(request.queryParams("text"));
@@ -60,7 +63,7 @@ public class MtgSlackbot {
       @Override
       public void run() {
         try {
-          URL url = new URL("http://localhost:" + serverPort);
+          URL url = new URL(selfHost);
           HttpURLConnection connection = (HttpURLConnection) url.openConnection();
           connection.setRequestMethod("POST");
           connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -96,7 +99,7 @@ public class MtgSlackbot {
     int keepaliveMs = System.getenv("keepalive") == null
         ? 0
         : Integer.valueOf(System.getenv("keepalive")) * 60 * 1000;
-
-    new MtgSlackbot(serverPort, token, keepaliveMs).start();
+    String selfHost = System.getenv("selfhost");
+    new MtgSlackbot(serverPort, token, keepaliveMs, selfHost).start();
   }
 }
