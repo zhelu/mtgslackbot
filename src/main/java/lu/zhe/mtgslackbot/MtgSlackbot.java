@@ -55,6 +55,7 @@ public class MtgSlackbot {
     if (timerTask != null) {
       timerTask.cancel();
     }
+    System.out.println("registering keep-alive. will send in " + keepAliveMs + " ms.");
     timerTask = new TimerTask() {
       @Override
       public void run() {
@@ -69,6 +70,7 @@ public class MtgSlackbot {
           out.writeBytes(urlParameters);
           out.flush();
           out.close();
+          System.out.println("sending keep-alive");
         } catch (Exception e) {
           e.printStackTrace();
         }
