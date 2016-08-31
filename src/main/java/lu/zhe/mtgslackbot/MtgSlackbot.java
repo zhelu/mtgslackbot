@@ -59,7 +59,7 @@ public class MtgSlackbot {
       @Override
       public void run() {
         try {
-          URL url = new URL("localhost:" + serverPort);
+          URL url = new URL("http://localhost:" + serverPort);
           HttpURLConnection connection = (HttpURLConnection) url.openConnection();
           connection.setRequestMethod("POST");
           connection.setRequestProperty("User-Agent", USER_AGENT);
