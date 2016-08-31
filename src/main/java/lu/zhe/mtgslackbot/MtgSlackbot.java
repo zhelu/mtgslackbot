@@ -27,7 +27,7 @@ public class MtgSlackbot {
   private final String token;
   // Send a query to self in this many millis (if positive)
   private final int keepAliveMs;
-  private final String appname;
+  private final String keepAliveUrl;
   // Guarded by this.
   private TimerTask timerTask;
 
@@ -104,7 +104,7 @@ public class MtgSlackbot {
     int keepaliveMs = System.getenv("keepalive") == null
         ? 0
         : Integer.valueOf(System.getenv("keepalive")) * 60 * 1000;
-    String selfhost = System.getenv("appname") == null
+    String appname = System.getenv("appname") == null
         ? null
         : "http://" + System.getenv("appname") + ".herokuapp.com/keepalive";
 
