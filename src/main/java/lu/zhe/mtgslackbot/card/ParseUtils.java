@@ -307,6 +307,7 @@ public class ParseUtils {
         .replaceAll("\\{X\\}", ":xx:")
         .replaceAll("\\{W/B\\}", ":wb:")
         .replaceAll("\\{B\\}", ":bk:")
+        .replaceAll("\\{E\\}", ":e:")
         .replaceAll("\\(", "(_")
         .replaceAll("\\)", "_)");
   }
