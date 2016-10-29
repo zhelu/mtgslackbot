@@ -36,7 +36,7 @@ public class ParseUtils {
       String name = reader.nextName().toLowerCase();
       String canonicalName = CardUtils.canonicalizeName(name);
       try {
-        Card card = readCard(reader, abilityWordPattern);
+        Card card = readCard(reader, canonicalName, abilityWordPattern);
         if (card != null) {
           allCards.put(canonicalName, card);
         }
@@ -48,7 +48,11 @@ public class ParseUtils {
     return allCards.build();
   }
 
-  private static Card readCard(JsonReader reader, String abilityWordPattern) throws IOException {
+  private static Card readCard(
+      JsonReader reader, String canonicalName, String abilityWordPattern)
+      throws IOException {
+    boolean reserved =
+        ReservedListUtils.isReservedCanonicalName(canonicalName);
     String name = null;
     String layout = null;
     List<String> sets = ImmutableList.of();
@@ -65,7 +69,6 @@ public class ParseUtils {
     String power = "";
     String toughness = "";
     Integer loyalty = null;
-    boolean reserved = false;
     List<String> rulings = ImmutableList.of();
     Map<Format, Legality> legalities = ImmutableMap.of();
     reader.beginObject();
