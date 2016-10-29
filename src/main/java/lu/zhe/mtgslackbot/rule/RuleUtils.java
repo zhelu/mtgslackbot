@@ -64,10 +64,14 @@ public class RuleUtils {
           }
           builder.put(lastParagraph, builder.get(lastParagraph) + "\n" + line.trim());
         } else {
-          String paragraph = m.group("p");
-          String rule = m.group("rule");
-          lastParagraph = paragraph;
-          builder.put(paragraph, rule);
+          try {
+            String paragraph = m.group("p");
+            String rule = m.group("rule");
+            lastParagraph = paragraph;
+            builder.put(paragraph, rule);
+          } catch (Exception e) {
+            // Rule misformatting. Just skip.
+          }
         }
       }
       if (readGlossary) {
