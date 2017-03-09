@@ -48,7 +48,7 @@ public class Resources {
       }
       System.out.println("Rules url: " + rulesUrl);
       pageScanner.close();
-      Scanner sc = new Scanner(new URL(rulesUrl).openStream(), "UTF-8");
+      Scanner sc = new Scanner(new URL(rulesUrl).openStream(), "ISO8859-1");
       allRules = RuleUtils.parseRules(sc);
       System.out.println("Rule entries: " + allRules.size());
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
