@@ -9,7 +9,9 @@ import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 import org.json.JSONObject;
 import java.net.URL;
 import java.net.URLConnection;
+import Java.util.HashSet;
 import java.util.Scanner;
+import Java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
