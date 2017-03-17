@@ -24,18 +24,20 @@ public class MtgSlackbot {
 
   private final DataSources dataSources = new DataSources();
   private final int serverPort;
-  private final String token;
+  private final Set<String> tokens = new HashSet<>();
   // Send a query to self in this many millis (if positive)
   private final int keepAliveMs;
   private final String keepAliveUrl;
   // Guarded by this.
   private TimerTask timerTask;
 
-  private MtgSlackbot(int serverPort, String token, int keepAliveMs, String keepAliveUrl) {
+  private MtgSlackbot(int serverPort, String tokens, int keepAliveMs, String keepAliveUrl) {
     this.serverPort = serverPort;
-    this.token = token;
     this.keepAliveMs = keepAliveMs;
     this.keepAliveUrl = keepAliveUrl;
+    for (String token : tokens.split(",")) {
+      this.tokens.add(token);
+    }
   }
 
   private void start() {
@@ -47,7 +49,7 @@ public class MtgSlackbot {
     });
 
     post("/", (request, response) -> {
-      if (!request.queryParams("token").equals(token)) {
+      if (!tokens.contains(request.queryParams("token"))) {
         response.status(401);
         return "Not authorized";
       }
@@ -100,7 +102,7 @@ public class MtgSlackbot {
     int serverPort = System.getenv("PORT") == null
         ? 8080
         : Integer.valueOf(System.getenv("PORT"));
-    String token = System.getenv("token");
+    String tokens = System.getenv("tokens");
     int keepaliveMs = System.getenv("keepalive") == null
         ? 0
         : Integer.valueOf(System.getenv("keepalive")) * 60 * 1000;
@@ -108,6 +110,6 @@ public class MtgSlackbot {
         ? null
         : "http://" + System.getenv("appname") + ".herokuapp.com/keepalive";
 
-    new MtgSlackbot(serverPort, token, keepaliveMs, appname).start();
+    new MtgSlackbot(serverPort, tokens, keepaliveMs, appname).start();
   }
 }

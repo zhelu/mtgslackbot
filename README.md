@@ -13,7 +13,7 @@ bazel run src/main/java/lu/zhe/mtgslackbot:BuildResources -- $absolute_path_to_j
 ### Configuration
 You need to authenticate against the token that Slack provides.
 ```shell
-heroku config:set token=$token_value_from_slack
+heroku config:set tokens=$comma_sep_token_value_from_slack
 ```
 
 By default, the app goes to sleep after 30 minutes of inactivity. If you want to send a keep alive.
