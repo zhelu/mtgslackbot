@@ -234,15 +234,21 @@ public class ParseUtils {
     reader.beginArray();
     while (reader.hasNext()) {
       reader.beginObject();
+      String date = null;
+      String rule = null;
       while (reader.hasNext()) {
         switch (reader.nextName()) {
           case "text":
-            rulings.add(reader.nextString());
+            rule = reader.nextString();
+            break;
+          case "date":
+            date = reader.nextString();
             break;
           default:
             reader.skipValue();
         }
       }
+      rulings.add(String.format("<%s> %s", date, rule));
       reader.endObject();
     }
     reader.endArray();
