@@ -1,13 +1,13 @@
 package lu.zhe.mtgslackbot.rule;
 
 import com.google.common.collect.ImmutableMap;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import lu.zhe.mtgslackbot.shared.Utils;
 
 /**
  * Utilities for parsing the comprehensive rules.
@@ -30,11 +30,12 @@ public class RuleUtils {
 
     Map<String, String> builder = new HashMap<>();
     while (sc.hasNextLine()) {
-      String line = sc.nextLine()
-          .replaceAll("\u0093", "\"")
-          .replaceAll("\u0094", "\"")
-          .replaceAll("\u0097", "-")
-          .replaceAll("\u0092", "'");
+      String line = Utils.substituteSymbols(
+          sc.nextLine()
+              .replaceAll("\u0093", "\"")
+              .replaceAll("\u0094", "\"")
+              .replaceAll("\u0097", "-")
+              .replaceAll("\u0092", "'"));
       if (line.equals("Credits")) {
         if (!readGlossary) {
           readRules = true;

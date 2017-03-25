@@ -4,6 +4,7 @@ java_library(
     name = "rule",
     srcs = glob(["*.java"]),
     deps = [
+        "//src/main/java/lu/zhe/mtgslackbot/shared:shared",
         "@com_google_code_gson_gson//jar",
         "@com_google_guava_guava//jar",
     ],
