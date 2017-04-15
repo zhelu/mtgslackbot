@@ -98,27 +98,3 @@ java_library(
         "@org_eclipse_jetty_server_9_3_10//jar",
     ],
 )
-
-java_library(
-    name = "org_eclipse_jetty_util_9_3_10",
-    visibility = ["//visibility:public"],
-    exports = [
-        "@org_eclipse_jetty_util_9_3_10//jar",
-    ],
-)
-
-java_library(
-    name = "org_eclipse_jetty_http_9_3_10",
-    visibility = ["//visibility:public"],
-    exports = [
-        "@org_eclipse_jetty_http_9_3_10//jar",
-    ],
-)
-
-java_library(
-    name = "org_eclipse_jetty_io_9_3_10",
-    visibility = ["//visibility:public"],
-    exports = [
-        "@org_eclipse_jetty_io_9_3_10//jar",
-    ],
-)
