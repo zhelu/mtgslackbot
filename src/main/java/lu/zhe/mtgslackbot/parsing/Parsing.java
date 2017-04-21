@@ -107,7 +107,8 @@ public class Parsing {
     m.find();
     try {
       Command command = Command.valueOf(m.group("command").toUpperCase());
-      String args = m.group("args").toLowerCase();
+      String rawArgs = m.group("args");
+      String args = rawArgs == null ? null : rawArgs.toLowerCase();
       switch (command) {
         case RULING:
           // fall through intended
