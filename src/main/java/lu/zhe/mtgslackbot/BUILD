@@ -18,6 +18,7 @@ java_library(
         "//src/main/java/lu/zhe/mtgslackbot:data_sources",
         "//src/main/java/lu/zhe/mtgslackbot/parsing",
         "@com_sparkjava_spark_2_2//jar",
+        "@org_json_json//jar",
     ],
 )
 

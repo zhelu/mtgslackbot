@@ -64,7 +64,7 @@ public abstract class Card implements Serializable {
   public abstract @Nullable String toughness();
 
   /** Card loyalty if available. */
-  public abstract @Nullable Integer loyalty();
+  public abstract @Nullable String loyalty();
 
   /** True if this card is on the reserve list. */
   public abstract boolean reserved();
@@ -93,7 +93,7 @@ public abstract class Card implements Serializable {
       Set<String> subtypes,
       String power,
       String toughness,
-      Integer loyalty,
+      String loyalty,
       boolean reserved,
       List<String> rulings,
       List<String> printings,

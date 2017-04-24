@@ -86,7 +86,11 @@ public class Parsing {
           new Function<Card, Integer>() {
             @Override
             public Integer apply(Card card) {
-              return card.loyalty();
+              try {
+                return Integer.parseInt(card.loyalty());
+              } catch (Exception e) {
+                return null;
+              }
             }
           });
 

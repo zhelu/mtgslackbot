@@ -16,7 +16,8 @@ public enum Layout {
   FLIP,
   SPLIT,
   DOUBLE_FACED,
-  MELD;
+  MELD,
+  AFTERMATH;
 
   public static Layout fromString(String layout) {
     switch (layout) {
@@ -32,6 +33,8 @@ public enum Layout {
         return DOUBLE_FACED;
       case "meld":
         return MELD;
+      case "aftermath":
+        return AFTERMATH;
       default:
         throw new IllegalArgumentException("Unknown layout: " + layout);
     }

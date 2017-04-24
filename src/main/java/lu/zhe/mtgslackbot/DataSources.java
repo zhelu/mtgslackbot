@@ -393,7 +393,9 @@ public class DataSources {
       case DOUBLE_FACED:
         return getNormalDisplayJson(card);
       case SPLIT:
-        return getSplitDisplayJson(card);
+        return getSplitDisplayJson(card, "SPLIT");
+      case AFTERMATH:
+        return getSplitDisplayJson(card, "AFTERMATH");
       case FLIP:
         return getFlipDoubleDisplayJson(card, "FLIPS");
       case MELD:
@@ -414,7 +416,9 @@ public class DataSources {
       case DOUBLE_FACED:
         return getFlipDoubleDisplayJson(card, "TRANSFORMS");
       case SPLIT:
-        return getSplitDisplayJson(card);
+        return getSplitDisplayJson(card, "SPLIT");
+      case AFTERMATH:
+        return getSplitDisplayJson(card, "AFTERMATH");
       case FLIP:
         return getFlipDoubleDisplayJson(card, "FLIPS");
       case MELD:
@@ -599,7 +603,12 @@ public class DataSources {
         .put("attachments", new JSONArray().put(card1Json).put(card2Json).put(meldJson));
   }
 
-  private JSONObject getSplitDisplayJson(Card card) {
+  /**
+   * Formats a split card for display.
+   *
+   * <p>type should be "AFTERMATH" or "SPLIT".
+   */
+  private JSONObject getSplitDisplayJson(Card card, String type) {
     List<String> names = card.names();
     Card left = allCards.get(names.get(0));
     Card right = allCards.get(names.get(1));
@@ -643,7 +652,7 @@ public class DataSources {
         .append(left.name())
         .append(" // ")
         .append(right.name())
-        .append(" (SPLIT CARD)")
+        .append(" (").append(type).append(" CARD)")
         .append(" | ")
         .append(getLegality(left))
         .append(" ")

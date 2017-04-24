@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -68,7 +69,7 @@ public class ParseUtils {
     String oracleText = "";
     String power = "";
     String toughness = "";
-    Integer loyalty = null;
+    String loyalty = null;
     List<String> rulings = ImmutableList.of();
     Map<Format, Legality> legalities = ImmutableMap.of();
     reader.beginObject();
@@ -128,7 +129,12 @@ public class ParseUtils {
           toughness = substituteAsterisk(reader.nextString());
           break;
         case "loyalty":
-          loyalty = reader.nextInt();
+          if (reader.peek() == JsonToken.NULL) {
+            loyalty = "X";
+            reader.nextNull();
+          } else {
+            loyalty = String.valueOf(reader.nextInt());
+          }
           break;
         case "reserved":
           reserved = reader.nextBoolean();

@@ -71,16 +71,6 @@ public class Resources {
       abilityWordSet.add(
           Character.toUpperCase(abilityWord.charAt(0)) + abilityWord.substring(1, abilityWord.length()));
     }
-    if (!debug) {
-      try (ObjectOutputStream oos =
-          new ObjectOutputStream(
-              new FileOutputStream(path + "/Rules.ser"))) {
-        oos.writeObject(allRules);
-        System.out.println("Wrote out Rules.ser");
-      } catch (IOException e) {
-        throw new RuntimeException("Couldn't serialize rule data", e);
-      }
-    }
     // parse cards
     try {
       long start = System.currentTimeMillis();
@@ -91,16 +81,6 @@ public class Resources {
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
     } catch (IOException e) {
       throw new RuntimeException("Error parsing cards", e);
-    }
-    if (!debug) {
-      try (ObjectOutputStream oos =
-          new ObjectOutputStream(
-              new FileOutputStream(path + "/Cards.ser"))) {
-        oos.writeObject(allCards);
-        System.out.println("Wrote out Cards.ser");
-      } catch (IOException e) {
-        throw new RuntimeException("Couldn't serialize card data", e);
-      }
     }
     // parse sets
     try {
@@ -114,6 +94,22 @@ public class Resources {
       throw new RuntimeException("Error parsing cards", e);
     }
     if (!debug) {
+      try (ObjectOutputStream oos =
+          new ObjectOutputStream(
+              new FileOutputStream(path + "/Rules.ser"))) {
+        oos.writeObject(allRules);
+        System.out.println("Wrote out Rules.ser");
+      } catch (IOException e) {
+        throw new RuntimeException("Couldn't serialize rule data", e);
+      }
+      try (ObjectOutputStream oos =
+          new ObjectOutputStream(
+              new FileOutputStream(path + "/Cards.ser"))) {
+        oos.writeObject(allCards);
+        System.out.println("Wrote out Cards.ser");
+      } catch (IOException e) {
+        throw new RuntimeException("Couldn't serialize card data", e);
+      }
       try (ObjectOutputStream oos =
           new ObjectOutputStream(
               new FileOutputStream(path + "/Sets.ser"))) {
