@@ -66,6 +66,7 @@ public class Utils {
         .replaceAll("\\{B\\}", ":bk:")
         .replaceAll("\\{E\\}", ":e:")
         .replaceAll("\\(", "(_")
-        .replaceAll("\\)", "_)");
+        .replaceAll("\\)", "_)")
+        .replaceAll("\\{P\\}", ":p:");
   }
 }
