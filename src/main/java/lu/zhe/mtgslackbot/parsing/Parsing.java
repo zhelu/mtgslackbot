@@ -107,6 +107,8 @@ public class Parsing {
    */
   public static ParsedInput getParsedInput(String input) {
     System.out.println(input);
+    // Normalize all whitespace.
+    input = input.replaceAll("\\s+", " ").trim();
     Matcher m = TOKENIZER.matcher(input);
     m.find();
     try {
@@ -368,6 +370,17 @@ public class Parsing {
               }
             }
             return true;
+          }
+        };
+      }
+    });
+    builder.put("s", ":", new Function<String, Predicate<Card>>() {
+      @Override
+      public Predicate<Card> apply(final String value) {
+        return new Predicate<Card>() {
+          @Override
+          public boolean apply(Card card) {
+            return card.printings().contains(value.toUpperCase());
           }
         };
       }

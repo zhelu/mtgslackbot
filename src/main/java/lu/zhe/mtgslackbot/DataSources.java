@@ -307,13 +307,13 @@ public class DataSources {
               commands.append(c.toString().toLowerCase() + " ");
             }
             return newTopJsonObj().put(
-                "text", "/mtg <command>\ncommands are: " + commands.toString().trim()).put("mrkdown", "false");
+                "text", "/mtg <command>\ncommands are: " + commands.toString().trim()).put("mrkdwn", "false");
           case "card":
-            return newTopJsonObj().put("text", "/mtg card <name>").put("mrkdown", "false");
+            return newTopJsonObj().put("text", "/mtg card <name>").put("mrkdwn", "false");
           case "ruling":
-            return newTopJsonObj().put("text", "/mtg ruling <name>").put("mrkdown", "false");
+            return newTopJsonObj().put("text", "/mtg ruling <name>").put("mrkdwn", "false");
           case "set":
-            return newTopJsonObj().put("text", "/mtg set <set abbreviation>").put("mrkdown", "false");
+            return newTopJsonObj().put("text", "/mtg set <set abbreviation>").put("mrkdwn", "false");
           case "search":
             // fall through intended
           case "count":
@@ -322,9 +322,9 @@ public class DataSources {
             return newTopJsonObj().put("text",
                 "/mtg {search|count|random} <predicate 1> ...\n"
                 + "predicates:\n"
-                + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is").put("mrkdown", "false");
+                + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is s").put("mrkdwn", "false");
         }
-        return newTopJsonObj().put("text", "not implemented").put("mrkdown", "false");
+        return newTopJsonObj().put("text", "not implemented").put("mrkdwn", "false");
       case RULE:
         return getGlossaryOrRuleEntry(arg);
       default:
