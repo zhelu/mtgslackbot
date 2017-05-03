@@ -129,12 +129,7 @@ public class ParseUtils {
           toughness = substituteAsterisk(reader.nextString());
           break;
         case "loyalty":
-          if (reader.peek() == JsonToken.NULL) {
-            loyalty = "X";
-            reader.nextNull();
-          } else {
-            loyalty = String.valueOf(reader.nextInt());
-          }
+          loyalty = reader.nextString();
           break;
         case "reserved":
           reserved = reader.nextBoolean();
