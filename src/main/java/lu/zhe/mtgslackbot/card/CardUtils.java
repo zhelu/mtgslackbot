@@ -18,6 +18,8 @@ public class CardUtils {
    */
   public static String canonicalizeName(String name) {
     return Normalizer.normalize(name.toLowerCase(), Form.NFD)
+        .replaceAll("[\\u2018\\u2019]", "'")
+        .replaceAll("[\\u201C\\u201D]", "\"")
         .replaceAll("[0-9\\-,'\".:?!\\p{InCombiningDiacriticalMarks}]", "")
         .replaceAll("æ", "ae")
         .replaceAll("œ", "oe");

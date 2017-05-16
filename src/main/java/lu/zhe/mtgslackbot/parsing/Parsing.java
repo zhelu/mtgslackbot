@@ -10,20 +10,18 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import lu.zhe.mtgslackbot.card.Card;
 import lu.zhe.mtgslackbot.card.CardUtils;
 import lu.zhe.mtgslackbot.card.Color;
 import lu.zhe.mtgslackbot.card.Format;
 import lu.zhe.mtgslackbot.card.Layout;
 import lu.zhe.mtgslackbot.card.Legality;
-
+import lu.zhe.mtgslackbot.shared.Utils;
 import javax.annotation.Nullable;
 
 /**
@@ -223,6 +221,18 @@ public class Parsing {
       @Override
       public Predicate<Card> apply(String value) {
         return Predicates.not(getTextPredicate(value));
+      }
+    });
+    builder.put("name", "~", new Function<String, Predicate<Card>>() {
+      @Override
+      public Predicate<Card> apply(String value) {
+        String input = Utils.normalizeInput(value);
+        return new Predicate<Card>() {
+          @Override
+          public boolean apply(Card card) {
+            return CardUtils.canonicalizeName(card.name()).contains(input);
+          }
+        };
       }
     });
     builder.put("is", ":", new Function<String, Predicate<Card>>() {

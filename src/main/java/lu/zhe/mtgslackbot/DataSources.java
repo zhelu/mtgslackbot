@@ -6,7 +6,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.security.SecureRandom;
@@ -19,7 +18,6 @@ import java.util.NoSuchElementException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import lu.zhe.mtgslackbot.card.Card;
 import lu.zhe.mtgslackbot.card.CardUtils;
 import lu.zhe.mtgslackbot.card.Format;
@@ -27,7 +25,7 @@ import lu.zhe.mtgslackbot.card.Layout;
 import lu.zhe.mtgslackbot.card.Legality;
 import lu.zhe.mtgslackbot.parsing.Parsing.Command;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
-
+import lu.zhe.mtgslackbot.shared.Utils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -106,7 +104,7 @@ public class DataSources {
     switch (input.command()) {
       case CARD:
         {
-          Card card = allCards.get(arg);
+          Card card = allCards.get(Utils.normalizeInput(arg));
           if (card != null) {
             return getDisplayJson(card);
           }

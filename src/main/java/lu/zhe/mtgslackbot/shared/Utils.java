@@ -69,4 +69,9 @@ public class Utils {
         .replaceAll("\\)", "_)")
         .replaceAll("\\{P\\}", ":p:");
   }
+
+  /** Canonicalize input for card searching. */
+  public static String normalizeInput(String input) {
+    return input.replaceAll("\\s+", " ").toLowerCase();
+  }
 }

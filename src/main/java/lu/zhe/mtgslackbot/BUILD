@@ -28,6 +28,7 @@ java_library(
     deps = [
         "//src/main/java/lu/zhe/mtgslackbot/card:card",
         "//src/main/java/lu/zhe/mtgslackbot/parsing:parsing",
+        "//src/main/java/lu/zhe/mtgslackbot/shared:shared",
         "//src/main/resources/lu/zhe/mtgslackbot:res",
         "@com_google_guava_guava//jar",
         "@org_json_json//jar",
