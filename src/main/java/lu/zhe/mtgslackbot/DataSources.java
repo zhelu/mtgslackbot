@@ -359,7 +359,7 @@ public class DataSources {
     if (extras == 0) {
       return newTopJsonObj().put("text", result);
     }
-    return newTopJsonObj().put("text", result + " plus " + extras + " others");
+    return newTopJsonObj().put("text", result + "; plus " + extras + " others");
   }
 
   /**
