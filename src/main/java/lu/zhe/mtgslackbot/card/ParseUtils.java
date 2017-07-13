@@ -129,7 +129,14 @@ public class ParseUtils {
           toughness = substituteAsterisk(reader.nextString());
           break;
         case "loyalty":
-          loyalty = reader.nextString();
+          // mtgjson is setting null for Nissa, Steward of Elements' loyalty.
+          // TODO: remove this after the bug is fixed
+          if (reader.peek() == JsonToken.NULL) {
+            reader.nextNull();
+            loyalty = "X";
+          } else {
+            loyalty = reader.nextString();
+          }
           break;
         case "reserved":
           reserved = reader.nextBoolean();
