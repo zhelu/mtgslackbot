@@ -343,7 +343,7 @@ public class DataSources {
     return null;
   }
 
-  private static JSONObject getTopList(List<Card> cards) {
+  private JSONObject getTopList(List<Card> cards) {
     int extras = 0;
     if (cards.size() > 10) {
       extras = cards.size() - 10;
@@ -355,6 +355,9 @@ public class DataSources {
         return c1.name().compareTo(c2.name());
       }
     });
+    if (cards.size() == 1) {
+      return getDisplayJson(cards.get(0));
+    }
     String result = SEMICOLON_JOINER.join(Lists.transform(cards, NAME_GETTER));
     if (extras == 0) {
       return newTopJsonObj().put("text", result);
