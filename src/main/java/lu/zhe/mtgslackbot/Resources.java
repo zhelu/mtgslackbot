@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  */
 public class Resources {
   private static final Pattern RULES_URL_PATTERN = Pattern.compile(
-      ".*(?<url>http://media.wizards.com/\\d+/[^/]*/MagicCompRules_.+\\.txt).*");
+      ".*(?<url>http://media.wizards.com/\\d+/[^/]*/MagicCompRules.+\\.txt).*");
 
   private Resources(String path, boolean debug) {
     System.setProperty("http.agent", "mtgslackbot");
