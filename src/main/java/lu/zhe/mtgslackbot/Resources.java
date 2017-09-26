@@ -35,7 +35,7 @@ public class Resources {
       long start = System.currentTimeMillis();
       Scanner pageScanner =
           new Scanner(new URL(
-              "http://magic.wizards.com/en/game-info/gameplay/rules-and-formats/rules")
+              "https://magic.wizards.com/en/game-info/gameplay/rules-and-formats/rules")
               .openStream());
       String rulesUrl = "";
       while (pageScanner.hasNextLine()) {

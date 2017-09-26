@@ -44,6 +44,8 @@ public class SetUtils {
         case "releaseDate":
           releaseDate = reader.nextString();
           break;
+        case "block":
+          reader.skipValue();
       }
     }
     if (code.length() == 3 && !name.isEmpty() && !releaseDate.isEmpty()) {
