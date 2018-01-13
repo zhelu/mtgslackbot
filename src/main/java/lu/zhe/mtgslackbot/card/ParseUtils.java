@@ -22,6 +22,7 @@ public class ParseUtils {
     // Disable instantiation
   }
 
+  private static final ImmutableSet<String> UN_SETS = ImmutableSet.of("UST", "UNH", "UGL");
   private static final Joiner JOINER = Joiner.on("|");
 
   /**
@@ -219,7 +220,7 @@ public class ParseUtils {
     reader.beginArray();
     while (reader.hasNext()) {
       String setName = reader.nextString();
-      if (!setName.equals("UGL") && !setName.equals("UNH") && setName.length() == 3) {
+      if (!UN_SETS.contains(setName) && setName.length() == 3) {
         sets.add(setName);
       }
     }
