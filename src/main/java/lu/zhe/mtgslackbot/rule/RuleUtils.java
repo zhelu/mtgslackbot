@@ -35,7 +35,8 @@ public class RuleUtils {
               .replaceAll("\u0093", "\"")
               .replaceAll("\u0094", "\"")
               .replaceAll("\u0097", "-")
-              .replaceAll("\u0092", "'"));
+              .replaceAll("\u0092", "'")
+              .replaceAll("\\*", "\u2217"));
       if (line.equals("Credits")) {
         if (!readGlossary) {
           readRules = true;
