@@ -6,9 +6,18 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.URL;
 import java.security.SecureRandom;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -17,6 +26,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 import lu.zhe.mtgslackbot.card.Card;
 import lu.zhe.mtgslackbot.card.CardUtils;
@@ -36,6 +46,8 @@ import org.json.JSONObject;
  */
 public class DataSources {
   private static final SecureRandom random = new SecureRandom();
+  private final ListeningExecutorService executor =
+      MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
   private static final Joiner SEMICOLON_JOINER = Joiner.on("; ");
   private static final Joiner NEWLINE_JOINER = Joiner.on("\n");
@@ -97,11 +109,41 @@ public class DataSources {
   }
 
   /** Get the display json for the parsed input. */
-  public JSONObject processInput(ParsedInput input) {
+  public JSONObject processInput(ParsedInput input, Consumer<String> responseHook) {
     String arg = input.arg();
     List<Predicate<Card>> predicates = input.filters();
     Predicate<Card> predicate = Predicates.and(predicates);
     switch (input.command()) {
+      case TEST:
+        ListenableFuture<String> future = executor.submit(new Callable<String>() {
+          @Override
+          public String call() {
+            try {
+              Scanner sc = new Scanner(
+                  new URL("https://api.scryfall.com/cards/random?q=cmc%3A3%20t%3Acreature").openStream(),
+                          "UTF-8");
+              StringBuilder result = new StringBuilder();
+              while (sc.hasNextLine()) {
+                result.append(sc.nextLine());
+              }
+              return newTopJsonObj().put("text", result.toString()).toString();
+            } catch (Exception e) {
+              e.printStackTrace();
+              return newTopJsonObj().put("text", "error").toString();
+            }
+          }
+        });
+        Futures.addCallback(future, new FutureCallback<String>() {
+          @Override
+          public void onSuccess(String response) {
+            responseHook.accept(response);
+          }
+
+          public void onFailure(Throwable t) {
+            responseHook.accept(newTopJsonObj().put("text", "error").toString());
+          }
+        });
+        return newTopJsonObj().put("text", "Randomizing...");
       case CARD:
         {
           Card card = allCards.get(Utils.normalizeInput(arg));

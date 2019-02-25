@@ -9,6 +9,8 @@ import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 import org.json.JSONObject;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.HttpURLConnection;
+import java.util.function.Consumer;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
@@ -19,8 +21,6 @@ import java.util.TimerTask;
  * Main class that handles IO.
  */
 public class MtgSlackbot {
-  private static final String RESPONSE_TEMPLATE =
-      "{\"text\": \"%s\", \"response_type\": \"in_channel\"}";
   private static final Timer TIMER = new Timer(true);
   private static final String USER_AGENT = "MtgSlackbot";
 
@@ -56,11 +56,27 @@ public class MtgSlackbot {
         return "Not authorized";
       }
       response.type("application/json");
-      return process(request.queryParams("text"));
+      return process(
+          request.queryParams("text"),
+          createConsumer(request.queryParams("response_url")));
     });
 
     if (keepAliveMs > 0 && keepAliveUrl != null) {
       registerKeepAlive();
+    }
+  }
+
+  private static Consumer<String> createConsumer(String responseHook) {
+    return new Consumer<String>() {
+      response -> {
+        URL url = new URL(responseHook);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setResponseMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("Content-Length", String.valueOf(response.length()));
+        conn.setDoOutput(true);
+        conn.getOutputStream().write(response.getBytes());
+      }
     }
   }
 
@@ -91,10 +107,12 @@ public class MtgSlackbot {
     };
   }
 
-  private String process(String input) {
+  private String process(String input, String responseHook) {
     try {
       ParsedInput parsedInput = Parsing.getParsedInput(input);
-      return dataSources.processInput(parsedInput).toString();
+      return dataSources.processInput(
+          parsedInput,
+          responseHook).toString();
     } catch (Exception e) {
       return e.getMessage();
     }

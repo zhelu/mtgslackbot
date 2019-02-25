@@ -131,6 +131,8 @@ public class Parsing {
           // fall through intended
         case RULE:
           // fall through intended
+        case TEST:
+          // fall through intended
         case HELP:
           return ParsedInput.create(
               command,
@@ -191,6 +193,7 @@ public class Parsing {
     MOMIR,
     RULE,
     RULING,
+    TEST,
     HELP;
   }
 
