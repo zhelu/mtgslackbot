@@ -68,6 +68,7 @@ public class MtgSlackbot {
 
   private static Consumer<String> createConsumer(String responseHook) {
     return (String response) -> {
+        System.out.println(response);
         try {
           URL url = new URL(responseHook);
           HttpURLConnection conn = (HttpURLConnection) url.openConnection();
