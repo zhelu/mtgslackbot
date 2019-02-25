@@ -7,6 +7,7 @@ import static spark.Spark.post;
 import lu.zhe.mtgslackbot.parsing.Parsing;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 import org.json.JSONObject;
+import java.io.DataOutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.HttpURLConnection;
@@ -76,7 +77,11 @@ public class MtgSlackbot {
           conn.setRequestProperty("Content-Type", "application/json");
           conn.setRequestProperty("Content-Length", String.valueOf(response.length()));
           conn.setDoOutput(true);
-          conn.getOutputStream().write(response.getBytes());
+          DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+          wr.writeChars(response);
+          wr.flush();
+          wr.close();
+          conn.disconnect();
         } catch (Exception e) {
           // Nothing to do
           System.out.println(e);
