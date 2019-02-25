@@ -77,7 +77,7 @@ public class MtgSlackbot {
           conn.setRequestProperty("Content-Type", "application/json");
           conn.setRequestProperty("Content-Length", String.valueOf(response.length()));
           conn.setDoOutput(true);
-          DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+          DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
           wr.writeChars(response);
           wr.flush();
           wr.close();
