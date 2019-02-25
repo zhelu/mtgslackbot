@@ -85,7 +85,10 @@ public class MtgSlackbot {
           wr.flush();
 
           BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-          while (rd.readLine() != null) {}
+          String s;
+          while ((s = rd.readLine()) != null) {
+            System.out.println(s);
+          }
           wr.close();
           rd.close();
 
