@@ -73,14 +73,15 @@ public class MtgSlackbot {
     return (String response) -> {
         System.out.println(responseHook);
         try {
+          String r = "{\"response_type\": \"in_channel\", \"text\": \"asdf\"}";
           URL url = new URL(responseHook);
           HttpURLConnection conn = (HttpURLConnection) url.openConnection();
           conn.setRequestMethod("POST");
-          conn.setRequestProperty("Content-Type", "application/json");
-          conn.setRequestProperty("Content-Length", String.valueOf(response.length()));
+          conn.setRequestProperty("Content-type", "application/json");
+          conn.setRequestProperty("Content-length", String.valueOf(r.length()));
           conn.setDoOutput(true);
           DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
-          wr.writeChars("{\"response_type\": \"in_channel\", \"text\": \"asdf\"}");
+          wr.writeChars(r);
           // wr.writeChars(response);
           wr.flush();
 
