@@ -67,17 +67,19 @@ public class MtgSlackbot {
   }
 
   private static Consumer<String> createConsumer(String responseHook) {
-    return new Consumer<String>() {
-      response -> {
-        URL url = new URL(responseHook);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setResponseMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setRequestProperty("Content-Length", String.valueOf(response.length()));
-        conn.setDoOutput(true);
-        conn.getOutputStream().write(response.getBytes());
-      }
-    }
+    return (String response) -> {
+        try {
+          URL url = new URL(responseHook);
+          HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+          conn.setRequestMethod("POST");
+          conn.setRequestProperty("Content-Type", "application/json");
+          conn.setRequestProperty("Content-Length", String.valueOf(response.length()));
+          conn.setDoOutput(true);
+          conn.getOutputStream().write(response.getBytes());
+        } catch (Exception e) {
+          // Nothing to do
+        }
+    };
   }
 
   private synchronized void registerKeepAlive() {
@@ -107,7 +109,7 @@ public class MtgSlackbot {
     };
   }
 
-  private String process(String input, String responseHook) {
+  private String process(String input, Consumer<String> responseHook) {
     try {
       ParsedInput parsedInput = Parsing.getParsedInput(input);
       return dataSources.processInput(
