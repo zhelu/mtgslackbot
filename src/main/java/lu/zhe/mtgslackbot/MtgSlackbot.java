@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.HttpURLConnection;
 import java.util.function.Consumer;
+import java.util.BufferedReader;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
@@ -78,9 +79,15 @@ public class MtgSlackbot {
           conn.setRequestProperty("Content-Length", String.valueOf(response.length()));
           conn.setDoOutput(true);
           DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
-          wr.writeChars(response);
+          wr.writeChars("{\"response_type\": \"in_channel\", \"text\": \"asdf\"}");
+          // wr.writeChars(response);
           wr.flush();
+
+          BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+          while (rd.readLine() != null) {}
           wr.close();
+          rd.close();
+
           conn.disconnect();
         } catch (Exception e) {
           // Nothing to do
