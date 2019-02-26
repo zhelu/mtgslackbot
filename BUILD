@@ -13,6 +13,14 @@ java_library(
 )
 
 java_library(
+    name = "commons_logging",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@commons_logging//jar",
+    ],
+)
+
+java_library(
     name = "org_apache_httpcomponents_httpclient",
     visibility = ["//visibility:public"],
     exports = [

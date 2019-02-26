@@ -91,3 +91,8 @@ maven_jar(
     name = "org_apache_httpcomponents_httpcore",
     artifact = "org.apache.httpcomponents:httpcore:4.4.11",
 )
+
+maven_jar(
+    name = "commons_logging",
+    artifact = "commons-logging:commons-logging:1.2",
+)
