@@ -81,3 +81,13 @@ maven_jar(
     name = "org_eclipse_jetty_io_9_3_10",
     artifact = "org.eclipse.jetty:jetty-io:9.3.10.v20160621",
 )
+
+maven_jar(
+    name = "org_apache_httpcomponents_httpclient",
+    artifact = "org.apache.httpcomponents:httpclient:4.5.7",
+)
+
+maven_jar(
+    name = "org_apache_httpcomponents_httpcore",
+    artifact = "org.apache.httpcomponents:httpcore:4.4.11",
+)

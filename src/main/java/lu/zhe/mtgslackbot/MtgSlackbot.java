@@ -6,6 +6,11 @@ import static spark.Spark.post;
 
 import lu.zhe.mtgslackbot.parsing.Parsing;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -76,35 +81,14 @@ public class MtgSlackbot {
     return (String response) -> {
         System.out.println(responseHook);
         try {
-//          String r = "{\"response_type\": \"in_channel\", \"text\": \"asdf\"}";
-          String r = "asdf";
-          URL url = new URL(responseHook);
-          HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-          conn.setRequestMethod("POST");
-          conn.setRequestProperty("Content-type", "text/plain");
-          conn.setRequestProperty("User-agent", "mtgslackbot");
-//          conn.setRequestProperty("Content-length", String.valueOf(r.length()));
-          conn.setDoOutput(true);
-          Writer wr = new BufferedWriter(
-              new OutputStreamWriter(new DataOutputStream(conn.getOutputStream())));
-          wr.write(r);
-          // wr.writeChars(response);
-          wr.flush();
-
-          int responseCode = conn.getResponseCode();
-          System.out.println("Response code: " + responseCode);
-
-          BufferedReader rd = new BufferedReader(
-              new InputStreamReader(
-                  responseCode == 500 ? conn.getErrorStream() : conn.getInputStream()));
-          String s;
-          while ((s = rd.readLine()) != null) {
-            System.out.println(s);
-          }
-          wr.close();
-          rd.close();
-
-          conn.disconnect();
+          String r = "{\"response_type\": \"in_channel\", \"text\": \"asdf\"}";
+          CloseableHttpClient client = HttpClients.createDefault();
+          HttpPost httpPost = new HttpPost(responseHook);
+          httpPost.setEntity(new StringEntity(r));
+          httpPost.setHeader("Content-type", "application/json");
+          CloseableHttpResponse httpResponse = client.execute(httpPost);
+          System.out.println("Status code: " + httpResponse.getStatusLine().getStatusCode());
+          client.close();
         } catch (Exception e) {
           // Nothing to do
           System.out.println(e);

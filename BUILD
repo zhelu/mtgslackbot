@@ -13,6 +13,22 @@ java_library(
 )
 
 java_library(
+    name = "org_apache_httpcomponents_httpclient",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_apache_httpcomponents_httpclient//jar",
+    ],
+)
+
+java_library(
+    name = "org_apache_httpcomponents_httpcore",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_apache_httpcomponents_httpcore//jar",
+    ],
+)
+
+java_library(
     name = "org_hamcrest_hamcrest_core",
     visibility = ["//visibility:public"],
     exports = [
