@@ -82,7 +82,7 @@ public class MtgSlackbot {
 //          conn.setRequestProperty("Content-length", String.valueOf(r.length()));
           conn.setDoOutput(true);
           DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
-          wr.writeChars(r);
+          wr.write(r);
           // wr.writeChars(response);
           wr.flush();
 
