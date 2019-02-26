@@ -85,7 +85,12 @@ public class MtgSlackbot {
           // wr.writeChars(response);
           wr.flush();
 
-          BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+          int responseCode = conn.getResponseCode();
+          System.out.println("Response code: " + responseCode);
+
+          BufferedReader rd = new BufferedReader(
+              new InputStreamReader(
+                  responseCode == 500 ? conn.getErrorStream() : conn.getInputStream()));
           String s;
           while ((s = rd.readLine()) != null) {
             System.out.println(s);
