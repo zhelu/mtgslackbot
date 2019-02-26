@@ -82,6 +82,7 @@ public class MtgSlackbot {
           HttpURLConnection conn = (HttpURLConnection) url.openConnection();
           conn.setRequestMethod("POST");
           conn.setRequestProperty("Content-type", "text/plain");
+          conn.setRequestProperty("User-agent", "mtgslackbot");
 //          conn.setRequestProperty("Content-length", String.valueOf(r.length()));
           conn.setDoOutput(true);
           Writer wr = new BufferedWriter(
