@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
 import java.net.URLConnection;
@@ -83,7 +84,8 @@ public class MtgSlackbot {
           conn.setRequestProperty("Content-type", "application/json");
 //          conn.setRequestProperty("Content-length", String.valueOf(r.length()));
           conn.setDoOutput(true);
-          Writer wr = new BufferedWriter(new DataOutputStream(conn.getOutputStream()));
+          Writer wr = new BufferedWriter(
+              new OutputStreamWriter(new DataOutputStream(conn.getOutputStream())));
           wr.write(r);
           // wr.writeChars(response);
           wr.flush();
