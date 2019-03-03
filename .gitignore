@@ -4,3 +4,4 @@ my_build/
 .gradle
 .DS_Store
 .idea
+.ijwb/
