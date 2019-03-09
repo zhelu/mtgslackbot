@@ -66,6 +66,10 @@ public class DataSources {
       Format.LEGACY,
       Format.VINTAGE,
       Format.COMMANDER);
+  private static final String CREATURE_FORMAT_STRING =
+      "https://api.scryfall.com/cards/random?" +
+          "q=cmc%%3A%s%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
+
   private final Map<String, Card> allCards;
   private final Map<String, String> allSets;
   private final Map<String, String> allRules;
@@ -129,16 +133,18 @@ public class DataSources {
           @Override
           public String call() {
             try {
+
               Scanner sc = new Scanner(
                   new URL(String.format(
-                      "https://api.scryfall.com/cards/random?q=cmc%%3A%s%%20t%%3Acreature",
+                      CREATURE_FORMAT_STRING,
                       arg)).openStream(),
                   "UTF-8");
               StringBuilder result = new StringBuilder();
               while (sc.hasNextLine()) {
                 result.append(sc.nextLine());
               }
-              return newTopJsonObj().put("text", result.toString()).toString();
+              return
+                  getShortDisplayJson(new JSONObject(result.toString()), newTopJsonObj());
             } catch (Exception e) {
               e.printStackTrace();
               return newTopJsonObj().put("text", "error").toString();
@@ -430,6 +436,38 @@ public class DataSources {
       throw new NoSuchElementException(canonicalName + " is not the canonical name for a card");
     }
     return getDisplayJson(card);
+  }
+
+  public String getShortDisplayJson(JSONObject card, JSONObject response) {
+    switch (card.getString("layout")) {
+      case "normal":
+        processCardFace(card, response);
+        return response.toString();
+      case "transform":
+      case "split":
+      case "flip":
+    }
+    return "unable to render card";
+  }
+
+  private void processCardFace(JSONObject face, JSONObject response) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(face.getString("name")).append(" ").append(
+        Utils.substituteSymbols(face.getString("mana_cost"))).append(" || ").append(
+        face.getString("type_line"));
+    if (face.has("power") && face.has("toughness")) {
+      builder.append(" ").append(Utils.substituteAsterisk(face.getString("power"))).append(
+          "/").append(Utils.substituteAsterisk(face.getString("toughness")));
+    }
+    if (face.has("loyalty")) {
+      builder.append(" <").append(face.getString("loyalty")).append(">");
+    }
+    builder
+        .append("\n")
+        .append(Utils.substituteSymbols(face.getString("oracle_text")));
+    JSONObject cardJson =
+        newAttachment().put("text", builder.toString()).put("color", getColor(face));
+    response.put("attachments", new JSONArray().put(cardJson));
   }
 
   public JSONObject getShortDisplayJson(Card card) {
@@ -741,6 +779,28 @@ public class DataSources {
     return new JSONObject()
         .put("mrkdwn_in", new JSONArray().put("text").put("pretext"))
         .put("fallback", "mtgslackbot");
+  }
+
+  private static String getColor(JSONObject card) {
+    JSONArray colors = card.getJSONArray("colors");
+    if (colors.length() > 1) {
+      return "#EEEE00";
+    } else if (colors.length() == 0) {
+      return card.getString("type_line").contains("Artifact") ? "#884444" : "#BBBBBB";
+    }
+    switch (colors.getString(0)) {
+      case "W":
+        return "#EEEEEE";
+      case "U":
+        return "#3333EE";
+      case "B":
+        return "#000000";
+      case "R":
+        return "#BB0000";
+      case "G":
+        return "#00AA00";
+    }
+    throw new IllegalStateException("unknown color information");
   }
 
   private static String getColor(Card card) {

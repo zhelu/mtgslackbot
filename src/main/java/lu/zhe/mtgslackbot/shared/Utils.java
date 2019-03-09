@@ -70,6 +70,10 @@ public class Utils {
         .replaceAll("\\{P\\}", ":p:");
   }
 
+  public static String substituteAsterisk(String text) {
+    return text.replaceAll("\\*", "\u2217");
+  }
+
   /** Canonicalize input for card searching. */
   public static String normalizeInput(String input) {
     return input.replaceAll("\\s+", " ").toLowerCase();
