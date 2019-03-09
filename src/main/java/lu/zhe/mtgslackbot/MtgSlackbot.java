@@ -81,10 +81,9 @@ public class MtgSlackbot {
     return (String response) -> {
         System.out.println(responseHook);
         try {
-          String r = "{\"response_type\": \"in_channel\", \"text\": \"asdf\"}";
           CloseableHttpClient client = HttpClients.createDefault();
           HttpPost httpPost = new HttpPost(responseHook);
-          httpPost.setEntity(new StringEntity(r));
+          httpPost.setEntity(new StringEntity(response));
           httpPost.setHeader("Content-type", "application/json");
           CloseableHttpResponse httpResponse = client.execute(httpPost);
           System.out.println("Status code: " + httpResponse.getStatusLine().getStatusCode());
