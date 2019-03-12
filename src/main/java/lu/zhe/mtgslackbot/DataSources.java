@@ -1,9 +1,6 @@
 package lu.zhe.mtgslackbot;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
+import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -31,7 +28,6 @@ import java.util.Scanner;
 import java.util.Set;
 
 import lu.zhe.mtgslackbot.card.Card;
-import lu.zhe.mtgslackbot.card.CardUtils;
 import lu.zhe.mtgslackbot.card.Format;
 import lu.zhe.mtgslackbot.card.Layout;
 import lu.zhe.mtgslackbot.card.Legality;
@@ -69,10 +65,18 @@ public class DataSources {
   private static final String CREATURE_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
           "q=cmc%%3A%s%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
+  private static final String EQUIPMENT_FORMAT_STRING =
+      "https://api.scryfall.com/cards/random?" +
+          "q=cmc%%3A%s%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
+  private static final String INSTANT_SORCERY_FORMAT_STRING =
+      "https://api.scryfall.com/cards/random?" +
+          "q=t%%3A%s+-is%%3Afunny+-is%%3Aextra";
+
 
   private final Map<String, Card> allCards;
   private final Map<String, String> allSets;
   private final Map<String, String> allRules;
+  private final String abilityKeyWordsPattern;
 
   @SuppressWarnings("unchecked")
   public DataSources() {
@@ -108,6 +112,27 @@ public class DataSources {
       long start = System.currentTimeMillis();
       allRules = (Map<String, String>) ois.readObject();
       System.out.println("\tTook " + (System.currentTimeMillis() - start) + " ms");
+
+      System.out.println("Reading ability keywords...");
+      String abilityWordGlossary = allRules.get("ability word");
+      String abilityWordParagraph =
+          allRules.get(
+              abilityWordGlossary.substring(
+                  abilityWordGlossary.lastIndexOf(" ") + 1,
+                  abilityWordGlossary.lastIndexOf(".")));
+      String abilityWordsJoined =
+          abilityWordParagraph.substring(
+              abilityWordParagraph.indexOf("The ability words are ") + 22,
+              abilityWordParagraph.length() - 1).replaceAll(" and ", " ");
+      String[] abilityWords = abilityWordsJoined.split(",");
+      List<String> abilityWordList = new ArrayList<>();
+      for (String abilityWord : abilityWords) {
+        abilityWord = abilityWord.trim();
+        abilityWordList.add(
+            Character.toUpperCase(abilityWord.charAt(0)) + abilityWord.substring(1));
+      }
+      abilityKeyWordsPattern = "(" + Joiner.on("|").join(abilityWordList) + ")";
+
     } catch (IOException | ClassNotFoundException e) {
       throw new RuntimeException("Error reading serialized rule data", e);
     }
@@ -120,41 +145,44 @@ public class DataSources {
     List<Predicate<Card>> predicates = input.filters();
     Predicate<Card> predicate = Predicates.and(predicates);
     switch (input.command()) {
-      case TEST:
-        try {
-          int cmc = Integer.parseInt(arg);
-          if (cmc <= 0) {
-            return newTopJsonObj().put("text", "argument must be a positive integer");
-          }
-        } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "argument must be a positive integer");
+      case TEST: {
+        String type = Ascii.toLowerCase(arg);
+        if (!type.equals("instant") && !type.equals("sorcery")) {
+          return newTopJsonObj().put("text",
+              "argument must be either instant or sorcery, but got \"" + type + "\"");
         }
-        ListenableFuture<String> future = executor.submit(new Callable<String>() {
-          @Override
-          public String call() {
-            try {
-
-              Scanner sc = new Scanner(
-                  new URL(String.format(
-                      CREATURE_FORMAT_STRING,
-                      arg)).openStream(),
-                  "UTF-8");
-              StringBuilder result = new StringBuilder();
-              while (sc.hasNextLine()) {
-                result.append(sc.nextLine());
+        List<ListenableFuture<String>> futures = new ArrayList<>();
+        for (int i = 0; i < 3; ++i) {
+          futures.add(executor.submit(new Callable<String>() {
+            @Override
+            public String call() {
+              try {
+                Scanner sc = new Scanner(
+                    new URL(String.format(
+                        INSTANT_SORCERY_FORMAT_STRING,
+                        type)).openStream(),
+                    "UTF-8");
+                StringBuilder result = new StringBuilder();
+                while (sc.hasNextLine()) {
+                  result.append(sc.nextLine());
+                }
+                return result.toString();
+              } catch (Exception e) {
+                e.printStackTrace();
+                return newTopJsonObj().put("text", "error").toString();
               }
-              return
-                  getShortDisplayJson(new JSONObject(result.toString()), newTopJsonObj());
-            } catch (Exception e) {
-              e.printStackTrace();
-              return newTopJsonObj().put("text", "error").toString();
             }
-          }
-        });
-        Futures.addCallback(future, new FutureCallback<String>() {
+          }));
+        }
+        ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
+        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
           @Override
-          public void onSuccess(String response) {
-            responseHook.accept(response);
+          public void onSuccess(List<String> strings) {
+            JSONObject response = new JSONObject();
+            for (String s : strings) {
+              getShortDisplayJson(new JSONObject(s), response);
+            }
+            responseHook.accept(response.toString());
           }
 
           public void onFailure(Throwable t) {
@@ -162,6 +190,7 @@ public class DataSources {
           }
         });
         return newTopJsonObj().put("text", "Randomizing...");
+      }
       case CARD: {
         Card card = allCards.get(Utils.normalizeInput(arg));
         if (card != null) {
@@ -319,34 +348,46 @@ public class DataSources {
         return json;
       }
       case MOMIR: {
-        int cmc;
         try {
-          cmc = Integer.parseInt(arg);
-        } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
-        }
-        final int cmcCopy = cmc;
-        if (cmc < 0) {
-          return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
-        }
-        Predicate<Card> p = new Predicate<Card>() {
-          @Override
-          public boolean apply(Card c) {
-            if (c.layout() == Layout.FLIP || c.layout() == Layout.DOUBLE_FACED) {
-              if (!c.name().equals(c.names().get(0))) {
-                return false;
-              }
-            }
-            if (!isLegal(c)) {
-              return false;
-            }
-            return c.types().contains("creature") && c.cmc() == cmcCopy;
+          int cmc = Integer.parseInt(arg);
+          if (cmc <= 0) {
+            return newTopJsonObj().put("text", "argument must be a positive integer");
           }
-        };
-        Card momir = getRandom(p);
-        return momir == null
-            ? newTopJsonObj().put("text", "no cards at cmc " + cmc)
-            : getShortDisplayJson(momir);
+        } catch (NumberFormatException e) {
+          return newTopJsonObj().put("text", "argument must be a positive integer");
+        }
+        ListenableFuture<String> future = executor.submit(new Callable<String>() {
+          @Override
+          public String call() {
+            try {
+              Scanner sc = new Scanner(
+                  new URL(String.format(
+                      CREATURE_FORMAT_STRING,
+                      arg)).openStream(),
+                  "UTF-8");
+              StringBuilder result = new StringBuilder();
+              while (sc.hasNextLine()) {
+                result.append(sc.nextLine());
+              }
+              return
+                  getShortDisplayJson(new JSONObject(result.toString()), newTopJsonObj());
+            } catch (Exception e) {
+              e.printStackTrace();
+              return newTopJsonObj().put("text", "error").toString();
+            }
+          }
+        });
+        Futures.addCallback(future, new FutureCallback<String>() {
+          @Override
+          public void onSuccess(String response) {
+            responseHook.accept(response);
+          }
+
+          public void onFailure(Throwable t) {
+            responseHook.accept(newTopJsonObj().put("text", "error").toString());
+          }
+        });
+        return newTopJsonObj().put("text", "Randomizing...");
       }
       case HELP:
         switch (arg) {
@@ -439,19 +480,39 @@ public class DataSources {
   }
 
   public String getShortDisplayJson(JSONObject card, JSONObject response) {
-    switch (card.getString("layout")) {
-      case "normal":
-        processCardFace(card, response);
-        return response.toString();
-      case "transform":
-      case "split":
-      case "flip":
+    try {
+      switch (card.getString("layout")) {
+        case "normal":
+          processNormalCard(card, response);
+          return response.toString();
+        case "transform":
+          processTransformCard(card, response);
+          return response.toString();
+        case "split":
+          processSplitCard(card, response);
+          return response.toString();
+        case "flip":
+          processFlipCard(card, response);
+          return response.toString();
+      }
+    } catch (Exception e) {
+      throw new IllegalStateException("Error trying to process:\n" + card, e);
     }
     return "unable to render card";
   }
 
-  private void processCardFace(JSONObject face, JSONObject response) {
+  private static void addAttachment(JSONObject response, JSONObject attachment) {
+    JSONArray attachments = response.optJSONArray("attachments");
+    if (attachments == null) {
+      attachments = new JSONArray();
+      response.put("attachments", attachments);
+    }
+    attachments.put(attachment);
+  }
+
+  private void processNormalCard(JSONObject face, JSONObject response) {
     StringBuilder builder = new StringBuilder();
+
     builder.append(face.getString("name")).append(" ").append(
         Utils.substituteSymbols(face.getString("mana_cost"))).append(" || ").append(
         face.getString("type_line"));
@@ -459,15 +520,75 @@ public class DataSources {
       builder.append(" ").append(Utils.substituteAsterisk(face.getString("power"))).append(
           "/").append(Utils.substituteAsterisk(face.getString("toughness")));
     }
-    if (face.has("loyalty")) {
-      builder.append(" <").append(face.getString("loyalty")).append(">");
+    builder
+        .append("\n")
+        .append(Utils.substituteAbilityWords(Utils.substituteSymbols(face.getString("oracle_text")),
+            abilityKeyWordsPattern));
+
+    addAttachment(response,
+        newAttachment().put("text", builder.toString()).put("color", getColor(face)));
+  }
+
+  private void processTransformCard(JSONObject card, JSONObject response) {
+    StringBuilder builder = new StringBuilder();
+
+    JSONObject face = card.getJSONArray("card_faces").getJSONObject(0);
+    builder.append(face.getString("name")).append(" ").append(
+        Utils.substituteSymbols(face.getString("mana_cost"))).append(" || ").append(
+        face.getString("type_line"));
+    if (face.has("power") && face.has("toughness")) {
+      builder.append(" ").append(Utils.substituteAsterisk(face.getString("power"))).append(
+          "/").append(Utils.substituteAsterisk(face.getString("toughness")));
     }
     builder
         .append("\n")
-        .append(Utils.substituteSymbols(face.getString("oracle_text")));
-    JSONObject cardJson =
-        newAttachment().put("text", builder.toString()).put("color", getColor(face));
-    response.put("attachments", new JSONArray().put(cardJson));
+        .append(Utils.substituteAbilityWords(Utils.substituteSymbols(face.getString("oracle_text")),
+            abilityKeyWordsPattern));
+
+    addAttachment(response,
+        newAttachment().put("text", builder.toString()).put("color", getColor(face)));
+  }
+
+  private void processSplitCard(JSONObject card, JSONObject response) {
+    StringBuilder builder = new StringBuilder();
+
+    JSONArray sides = card.getJSONArray("card_faces");
+    builder.append(card.getString("name")).append(" (SPLIT CARD)\n");
+    JSONObject side1 = sides.getJSONObject(0);
+    JSONObject side2 = sides.getJSONObject(1);
+    builder.append(side1.getString("name")).append(" ").append(
+        Utils.substituteSymbols(side1.getString("mana_cost"))).append(" || ").append(
+        side1.getString("type_line")).append("\n").append(Utils.substituteAbilityWords(
+        Utils.substituteSymbols(side1.getString("oracle_text")), abilityKeyWordsPattern)).append(
+        "\n\n").append(
+        side2.getString("name")).append(" ").append(
+        Utils.substituteSymbols(side2.getString("mana_cost"))).append(" || ").append(
+        side2.getString("type_line")).append("\n").append(Utils.substituteAbilityWords(
+        Utils.substituteSymbols(side2.getString("oracle_text")), abilityKeyWordsPattern));
+
+    addAttachment(response,
+        newAttachment().put("text", builder.toString()).put("color", getColor(card)));
+  }
+
+  private void processFlipCard(JSONObject card, JSONObject response) {
+    StringBuilder builder = new StringBuilder();
+
+    JSONArray sides = card.getJSONArray("card_faces");
+
+    JSONObject side1 = sides.getJSONObject(0);
+    JSONObject side2 = sides.getJSONObject(1);
+    builder.append(side1.getString("name")).append(" ").append(
+        Utils.substituteSymbols(side1.getString("mana_cost"))).append(" || ").append(
+        side1.getString("type_line")).append("\n").append(Utils.substituteAbilityWords(
+        Utils.substituteSymbols(side1.getString("oracle_text")), abilityKeyWordsPattern)).append(
+        "\n\nFLIPS INTO:\n\n").append(
+        side2.getString("name")).append(" ").append(
+        Utils.substituteSymbols(side2.getString("mana_cost"))).append(" || ").append(
+        side2.getString("type_line")).append("\n").append(Utils.substituteAbilityWords(
+        Utils.substituteSymbols(side2.getString("oracle_text")), abilityKeyWordsPattern));
+
+    addAttachment(response,
+        newAttachment().put("text", builder.toString()).put("color", getColor(card)));
   }
 
   public JSONObject getShortDisplayJson(Card card) {

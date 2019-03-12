@@ -69,7 +69,7 @@ public class Resources {
     for (String abilityWord : abilityWords) {
       abilityWord = abilityWord.trim();
       abilityWordSet.add(
-          Character.toUpperCase(abilityWord.charAt(0)) + abilityWord.substring(1, abilityWord.length()));
+          Character.toUpperCase(abilityWord.charAt(0)) + abilityWord.substring(1));
     }
     // parse cards
     try {
@@ -95,24 +95,24 @@ public class Resources {
     }
     if (!debug) {
       try (ObjectOutputStream oos =
-          new ObjectOutputStream(
-              new FileOutputStream(path + "/Rules.ser"))) {
+               new ObjectOutputStream(
+                   new FileOutputStream(path + "/Rules.ser"))) {
         oos.writeObject(allRules);
         System.out.println("Wrote out Rules.ser");
       } catch (IOException e) {
         throw new RuntimeException("Couldn't serialize rule data", e);
       }
       try (ObjectOutputStream oos =
-          new ObjectOutputStream(
-              new FileOutputStream(path + "/Cards.ser"))) {
+               new ObjectOutputStream(
+                   new FileOutputStream(path + "/Cards.ser"))) {
         oos.writeObject(allCards);
         System.out.println("Wrote out Cards.ser");
       } catch (IOException e) {
         throw new RuntimeException("Couldn't serialize card data", e);
       }
       try (ObjectOutputStream oos =
-          new ObjectOutputStream(
-              new FileOutputStream(path + "/Sets.ser"))) {
+               new ObjectOutputStream(
+                   new FileOutputStream(path + "/Sets.ser"))) {
         oos.writeObject(allSets);
         System.out.println("Wrote out Sets.ser");
       } catch (IOException e) {

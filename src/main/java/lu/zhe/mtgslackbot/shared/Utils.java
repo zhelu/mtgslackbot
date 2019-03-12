@@ -70,6 +70,10 @@ public class Utils {
         .replaceAll("\\{P\\}", ":p:");
   }
 
+  public static String substituteAbilityWords(String text, String pattern) {
+    return text.replaceAll(pattern + " \u2014", "_$1_ \u2014");
+  }
+
   public static String substituteAsterisk(String text) {
     return text.replaceAll("\\*", "\u2217");
   }
