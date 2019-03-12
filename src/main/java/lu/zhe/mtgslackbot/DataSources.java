@@ -178,7 +178,7 @@ public class DataSources {
         Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
           @Override
           public void onSuccess(List<String> strings) {
-            JSONObject response = new JSONObject();
+            JSONObject response = newTopJsonObj();
             for (String s : strings) {
               getShortDisplayJson(new JSONObject(s), response);
             }
