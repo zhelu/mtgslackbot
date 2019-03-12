@@ -64,10 +64,10 @@ public class DataSources {
       Format.COMMANDER);
   private static final String CREATURE_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
-          "q=cmc%%3A%s%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
+          "q=cmc%%3A%d%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
   private static final String EQUIPMENT_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
-          "q=cmc%%3A%s%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
+          "q=cmc%%3A%d%%20t%%3Aequipment+-is%%3Afunny+-is%%3Aextra";
   private static final String INSTANT_SORCERY_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
           "q=t%%3A%s+-is%%3Afunny+-is%%3Aextra";
@@ -146,21 +146,45 @@ public class DataSources {
     Predicate<Card> predicate = Predicates.and(predicates);
     switch (input.command()) {
       case TEST: {
-        String type = Ascii.toLowerCase(arg);
-        if (!type.equals("instant") && !type.equals("sorcery")) {
-          return newTopJsonObj().put("text",
-              "argument must be either instant or sorcery, but got \"" + type + "\"");
+        int cmc;
+        try {
+          cmc = Integer.parseInt(arg);
+          if (cmc <= 0) {
+            return newTopJsonObj().put("text", "argument must be a positive integer");
+          }
+        } catch (NumberFormatException e) {
+          return newTopJsonObj().put("text", "argument must be a positive integer");
         }
         List<ListenableFuture<String>> futures = new ArrayList<>();
-        for (int i = 0; i < 3; ++i) {
+        futures.add(executor.submit(new Callable<String>() {
+          @Override
+          public String call() {
+            try {
+              Scanner sc = new Scanner(
+                  new URL(String.format(
+                      CREATURE_FORMAT_STRING,
+                      cmc)).openStream(),
+                  "UTF-8");
+              StringBuilder result = new StringBuilder();
+              while (sc.hasNextLine()) {
+                result.append(sc.nextLine());
+              }
+              return result.toString();
+            } catch (Exception e) {
+              e.printStackTrace();
+              return null;
+            }
+          }
+        }));
+        if (cmc > 0) {
           futures.add(executor.submit(new Callable<String>() {
             @Override
             public String call() {
               try {
                 Scanner sc = new Scanner(
                     new URL(String.format(
-                        INSTANT_SORCERY_FORMAT_STRING,
-                        type)).openStream(),
+                        EQUIPMENT_FORMAT_STRING,
+                        cmc - 1)).openStream(),
                     "UTF-8");
                 StringBuilder result = new StringBuilder();
                 while (sc.hasNextLine()) {
@@ -169,7 +193,7 @@ public class DataSources {
                 return result.toString();
               } catch (Exception e) {
                 e.printStackTrace();
-                return newTopJsonObj().put("text", "error").toString();
+                return null;
               }
             }
           }));
@@ -180,6 +204,11 @@ public class DataSources {
           public void onSuccess(List<String> strings) {
             JSONObject response = newTopJsonObj();
             for (String s : strings) {
+              if (s == null) {
+                responseHook.accept(
+                    newTopJsonObj().put("text", "Unable to generate a random creature").toString());
+                return;
+              }
               getShortDisplayJson(new JSONObject(s), response);
             }
             responseHook.accept(response.toString());
@@ -274,31 +303,50 @@ public class DataSources {
         return getSet(arg);
       }
       case JHOIRA: {
-        final String jhoiraType = arg.toLowerCase();
-        if (!jhoiraType.equals("instant") && !jhoiraType.equals("sorcery")) {
-          return newTopJsonObj().put("text", "jhoira command expects 'sorcery' or 'instant'");
+        String type = Ascii.toLowerCase(arg);
+        if (!type.equals("instant") && !type.equals("sorcery")) {
+          return newTopJsonObj().put("text",
+              "argument must be either instant or sorcery, but got \"" + type + "\"");
         }
-        Predicate<Card> p = new Predicate<Card>() {
-          @Override
-          public boolean apply(Card c) {
-            if (!isLegal(c)) {
-              return false;
+        List<ListenableFuture<String>> futures = new ArrayList<>();
+        for (int i = 0; i < 3; ++i) {
+          futures.add(executor.submit(new Callable<String>() {
+            @Override
+            public String call() {
+              try {
+                Scanner sc = new Scanner(
+                    new URL(String.format(
+                        INSTANT_SORCERY_FORMAT_STRING,
+                        type)).openStream(),
+                    "UTF-8");
+                StringBuilder result = new StringBuilder();
+                while (sc.hasNextLine()) {
+                  result.append(sc.nextLine());
+                }
+                return result.toString();
+              } catch (Exception e) {
+                e.printStackTrace();
+                return newTopJsonObj().put("text", "error").toString();
+              }
             }
-            return c.types().contains(jhoiraType);
-          }
-        };
-        Set<Card> cards = new HashSet<>();
-        while (cards.size() < 3) {
-          cards.add(getRandom(p));
+          }));
         }
-        JSONArray attachments = new JSONArray();
-        for (Card r : cards) {
-          JSONArray cardAttachments = getDisplayJson(r).getJSONArray("attachments");
-          for (int i = 0; i < cardAttachments.length(); ++i) {
-            attachments.put(cardAttachments.getJSONObject(i));
+        ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
+        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
+          @Override
+          public void onSuccess(List<String> strings) {
+            JSONObject response = newTopJsonObj();
+            for (String s : strings) {
+              getShortDisplayJson(new JSONObject(s), response);
+            }
+            responseHook.accept(response.toString());
           }
-        }
-        return newTopJsonObj().put("attachments", attachments);
+
+          public void onFailure(Throwable t) {
+            responseHook.accept(newTopJsonObj().put("text", "error").toString());
+          }
+        });
+        return newTopJsonObj().put("text", "Randomizing...");
       }
       case MOJOS: {
         int cmc;
@@ -348,8 +396,9 @@ public class DataSources {
         return json;
       }
       case MOMIR: {
+        int cmc;
         try {
-          int cmc = Integer.parseInt(arg);
+          cmc = Integer.parseInt(arg);
           if (cmc <= 0) {
             return newTopJsonObj().put("text", "argument must be a positive integer");
           }
@@ -363,7 +412,7 @@ public class DataSources {
               Scanner sc = new Scanner(
                   new URL(String.format(
                       CREATURE_FORMAT_STRING,
-                      arg)).openStream(),
+                      cmc)).openStream(),
                   "UTF-8");
               StringBuilder result = new StringBuilder();
               while (sc.hasNextLine()) {
