@@ -146,79 +146,8 @@ public class DataSources {
     Predicate<Card> predicate = Predicates.and(predicates);
     switch (input.command()) {
       case TEST: {
-        int cmc;
-        try {
-          cmc = Integer.parseInt(arg);
-          if (cmc <= 0) {
-            return newTopJsonObj().put("text", "argument must be a positive integer");
-          }
-        } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "argument must be a positive integer");
-        }
-        List<ListenableFuture<String>> futures = new ArrayList<>();
-        futures.add(executor.submit(new Callable<String>() {
-          @Override
-          public String call() {
-            try {
-              Scanner sc = new Scanner(
-                  new URL(String.format(
-                      CREATURE_FORMAT_STRING,
-                      cmc)).openStream(),
-                  "UTF-8");
-              StringBuilder result = new StringBuilder();
-              while (sc.hasNextLine()) {
-                result.append(sc.nextLine());
-              }
-              return result.toString();
-            } catch (Exception e) {
-              e.printStackTrace();
-              return null;
-            }
-          }
-        }));
-        if (cmc > 0) {
-          futures.add(executor.submit(new Callable<String>() {
-            @Override
-            public String call() {
-              try {
-                Scanner sc = new Scanner(
-                    new URL(String.format(
-                        EQUIPMENT_FORMAT_STRING,
-                        cmc - 1)).openStream(),
-                    "UTF-8");
-                StringBuilder result = new StringBuilder();
-                while (sc.hasNextLine()) {
-                  result.append(sc.nextLine());
-                }
-                return result.toString();
-              } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-              }
-            }
-          }));
-        }
-        ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
-        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
-          @Override
-          public void onSuccess(List<String> strings) {
-            JSONObject response = newTopJsonObj();
-            for (String s : strings) {
-              if (s == null) {
-                responseHook.accept(
-                    newTopJsonObj().put("text", "Unable to generate a random creature").toString());
-                return;
-              }
-              getShortDisplayJson(new JSONObject(s), response);
-            }
-            responseHook.accept(response.toString());
-          }
-
-          public void onFailure(Throwable t) {
-            responseHook.accept(newTopJsonObj().put("text", "error").toString());
-          }
-        });
-        return newTopJsonObj().put("text", "Randomizing...");
+        return newTopJsonObj().put("text",
+            "The test command is currently not bound to any feature.");
       }
       case CARD: {
         Card card = allCards.get(Utils.normalizeInput(arg));
@@ -352,48 +281,76 @@ public class DataSources {
         int cmc;
         try {
           cmc = Integer.parseInt(arg);
+          if (cmc <= 0) {
+            return newTopJsonObj().put("text", "argument must be a positive integer");
+          }
         } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
+          return newTopJsonObj().put("text", "argument must be a positive integer");
         }
-        final int cmcCopy = cmc;
-        if (cmc < 0) {
-          return newTopJsonObj().put("text", "momir/mojos expects a non-negative argument");
-        }
-        Predicate<Card> p = new Predicate<Card>() {
+        List<ListenableFuture<String>> futures = new ArrayList<>();
+        futures.add(executor.submit(new Callable<String>() {
           @Override
-          public boolean apply(Card c) {
-            if (c.layout() == Layout.FLIP || c.layout() == Layout.DOUBLE_FACED) {
-              if (!c.name().equals(c.names().get(0))) {
-                return false;
+          public String call() {
+            try {
+              Scanner sc = new Scanner(
+                  new URL(String.format(
+                      CREATURE_FORMAT_STRING,
+                      cmc)).openStream(),
+                  "UTF-8");
+              StringBuilder result = new StringBuilder();
+              while (sc.hasNextLine()) {
+                result.append(sc.nextLine());
+              }
+              return result.toString();
+            } catch (Exception e) {
+              e.printStackTrace();
+              return null;
+            }
+          }
+        }));
+        if (cmc > 0) {
+          futures.add(executor.submit(new Callable<String>() {
+            @Override
+            public String call() {
+              try {
+                Scanner sc = new Scanner(
+                    new URL(String.format(
+                        EQUIPMENT_FORMAT_STRING,
+                        cmc - 1)).openStream(),
+                    "UTF-8");
+                StringBuilder result = new StringBuilder();
+                while (sc.hasNextLine()) {
+                  result.append(sc.nextLine());
+                }
+                return result.toString();
+              } catch (Exception e) {
+                e.printStackTrace();
+                return null;
               }
             }
-            if (!isLegal(c)) {
-              return false;
-            }
-            return c.types().contains("creature") && c.cmc() == cmcCopy;
-          }
-        };
-        Card creature = getRandom(p);
-        Predicate<Card> equip = new Predicate<Card>() {
-          @Override
-          public boolean apply(Card c) {
-            if (c.layout() == Layout.FLIP || c.layout() == Layout.DOUBLE_FACED) {
-              if (!c.name().equals(c.names().get(0))) {
-                return false;
-              }
-            }
-            return c.subtypes().contains("equipment") && c.cmc() < cmcCopy;
-          }
-        };
-        Card equipment = getRandom(equip);
-        JSONObject json = getShortDisplayJson(creature);
-        if (equipment != null) {
-          JSONArray equipmentAttachments = getDisplayJson(equipment).getJSONArray("attachments");
-          for (int i = 0; i < equipmentAttachments.length(); ++i) {
-            json.getJSONArray("attachments").put(equipmentAttachments.getJSONObject(i));
-          }
+          }));
         }
-        return json;
+        ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
+        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
+          @Override
+          public void onSuccess(List<String> strings) {
+            JSONObject response = newTopJsonObj();
+            for (String s : strings) {
+              if (s == null) {
+                responseHook.accept(
+                    newTopJsonObj().put("text", "Unable to generate a random creature").toString());
+                return;
+              }
+              getShortDisplayJson(new JSONObject(s), response);
+            }
+            responseHook.accept(response.toString());
+          }
+
+          public void onFailure(Throwable t) {
+            responseHook.accept(newTopJsonObj().put("text", "error").toString());
+          }
+        });
+        return newTopJsonObj().put("text", "Randomizing...");
       }
       case MOMIR: {
         int cmc;
