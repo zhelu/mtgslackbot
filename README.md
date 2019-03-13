@@ -3,7 +3,7 @@
 This project used to have a database of cards, but it turns out that [Scryfall](www.scryfall.com)
 does a really good job of that, and they have a [Slack bot](https://scryfall.com/docs/slack-bot).
 
-Instead, now this bot generates random cards momir and mjhosto.
+Instead, now this bot generates random cards for momir and mjhosto.
 
 ## Building
 
