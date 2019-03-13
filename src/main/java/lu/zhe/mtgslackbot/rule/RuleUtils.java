@@ -1,13 +1,13 @@
 package lu.zhe.mtgslackbot.rule;
 
 import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
+import lu.zhe.mtgslackbot.shared.Utils;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import lu.zhe.mtgslackbot.shared.Utils;
+import java.util.regex.Pattern;
 
 /**
  * Utilities for parsing the comprehensive rules.
@@ -21,7 +21,7 @@ public class RuleUtils {
   /**
    * Reads a map from key words or paragraphs to text from the input {@link Scanner}.
    */
-  public static Map<String, String> parseRules(Scanner sc) throws IOException {
+  public static Map<String, String> parseRules(Scanner sc) {
     // State for parsing
     boolean readRules = false;
     boolean readGlossary = false;
@@ -58,8 +58,6 @@ public class RuleUtils {
           lastParagraph = null;
           continue;
         }
-        if (!m.matches() && !line.startsWith("Example: ") && !line.startsWith("  ")) {
-        }
         if (line.startsWith("Example: ") || line.startsWith("  ")) {
           if (lastParagraph == null) {
             throw new IllegalStateException("lastParagraph state variable is null");
@@ -72,7 +70,7 @@ public class RuleUtils {
             lastParagraph = paragraph;
             builder.put(paragraph, rule);
           } catch (Exception e) {
-            // Rule misformatting. Just skip.
+            // Rule not formatted properly. Just skip.
           }
         }
       }
