@@ -1,8 +1,13 @@
-# Slack bot for MtG cards, set, and rules
+# Slack bot for generating random cards for momir/mjhosto
+
+This project used to have a database of cards, but it turns out that [Scryfall](www.scryfall.com)
+does a really good job of that, and they have a [Slack bot](https://scryfall.com/docs/slack-bot).
+
+Instead, now this bot generates random cards momir and mjhosto.
 
 ## Building
 
-### Build serialied resources
+### Build data base for rules
 
 ```shell
 bazel run src/main/java/lu/zhe/mtgslackbot:BuildResources -- $absolute_path_to_java/lu/zhe/mtgslackbot/res$
@@ -33,5 +38,5 @@ git push heroku master
 
 ### Manual testing
 ```shell
-bazel run src/main/java/lu/zhe/mtgslackbot:Tester -- card emrakul the
+bazel run src/main/java/lu/zhe/mtgslackbot:Tester -- mojos 3
 ```
