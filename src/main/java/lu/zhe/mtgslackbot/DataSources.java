@@ -34,7 +34,7 @@ public class DataSources {
           "q=cmc%%3A%d%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
   private static final String EQUIPMENT_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
-          "q=cmc<%d%%20t%%3Aequipment+-is%%3Afunny+-is%%3Aextra";
+          "q=cmc%%3C%d%%20t%%3Aequipment+-is%%3Afunny+-is%%3Aextra";
   private static final String INSTANT_SORCERY_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
           "q=t%%3A%s+-is%%3Afunny+-is%%3Aextra";
