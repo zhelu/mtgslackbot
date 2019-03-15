@@ -1,9 +1,10 @@
 package lu.zhe.mtgslackbot;
 
 import com.google.common.base.Joiner;
-import java.util.function.Consumer;
 import lu.zhe.mtgslackbot.parsing.Parsing;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
+
+import java.util.function.Consumer;
 
 public class Tester {
   private static final Joiner JOINER = Joiner.on(" ");

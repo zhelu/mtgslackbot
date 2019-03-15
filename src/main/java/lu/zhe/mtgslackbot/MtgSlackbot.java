@@ -1,52 +1,39 @@
 package lu.zhe.mtgslackbot;
 
-import static spark.Spark.get;
-import static spark.Spark.port;
-import static spark.Spark.post;
-
 import lu.zhe.mtgslackbot.parsing.Parsing;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.HttpURLConnection;
+import java.time.Duration;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.HashSet;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+
+import static spark.Spark.get;
+import static spark.Spark.post;
+import static spark.SparkBase.port;
+
 
 /**
  * Main class that handles IO.
  */
 public class MtgSlackbot {
   private static final Timer TIMER = new Timer(true);
-  private static final String USER_AGENT = "MtgSlackbot";
 
   private final DataSources dataSources = new DataSources();
   private final int serverPort;
   private final Set<String> tokens = new HashSet<>();
   // Send a query to self in this many millis (if positive)
-  private final int keepAliveMs;
+  private final Duration keepAlive;
   private final String keepAliveUrl;
-  // Guarded by this.
-  private TimerTask timerTask;
 
-  private MtgSlackbot(int serverPort, String tokens, int keepAliveMs, String keepAliveUrl) {
+  private MtgSlackbot(int serverPort, String tokens, Duration keepAlive, String keepAliveUrl) {
     this.serverPort = serverPort;
-    this.keepAliveMs = keepAliveMs;
+    this.keepAlive = keepAlive;
     this.keepAliveUrl = keepAliveUrl;
     for (String token : tokens.split(",")) {
       this.tokens.add(token);
@@ -72,33 +59,31 @@ public class MtgSlackbot {
           createConsumer(request.queryParams("response_url")));
     });
 
-    if (keepAliveMs > 0 && keepAliveUrl != null) {
+    if (!keepAlive.isNegative() && !keepAlive.isZero() && keepAliveUrl != null) {
       registerKeepAlive();
     }
   }
 
   private static Consumer<String> createConsumer(String responseHook) {
     return (String response) -> {
-        System.out.println(responseHook);
-        try {
-          CloseableHttpClient client = HttpClients.createDefault();
-          HttpPost httpPost = new HttpPost(responseHook);
-          httpPost.setEntity(new StringEntity(response));
-          httpPost.setHeader("Content-type", "application/json");
-          CloseableHttpResponse httpResponse = client.execute(httpPost);
-          System.out.println("Status code: " + httpResponse.getStatusLine().getStatusCode());
-          client.close();
-        } catch (Exception e) {
-          // Nothing to do
-          System.out.println(e);
-        }
+      try {
+        CloseableHttpClient client = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(responseHook);
+        httpPost.setEntity(new StringEntity(response));
+        httpPost.setHeader("Content-type", "application/json");
+        client.execute(httpPost);
+        client.close();
+      } catch (Exception e) {
+        // Nothing to do
+        System.out.println(e);
+      }
     };
   }
 
   private synchronized void registerKeepAlive() {
     System.out.println(
-        "Register keep alive to: " + keepAliveUrl + " every " + keepAliveMs + " ms.");
-    TIMER.schedule(buildTimerTask(), keepAliveMs);
+        "Register keep alive to: " + keepAliveUrl + " every " + keepAlive.toMillis() + " ms.");
+    TIMER.schedule(buildTimerTask(), keepAlive.toMillis());
   }
 
   private TimerTask buildTimerTask() {
@@ -114,7 +99,7 @@ public class MtgSlackbot {
           while (sc.hasNextLine()) {
             System.out.println(sc.nextLine());
           }
-          TIMER.schedule(buildTimerTask(), keepAliveMs);
+          TIMER.schedule(buildTimerTask(), keepAlive.toMillis());
         } catch (Exception e) {
           e.printStackTrace();
         }
@@ -138,13 +123,13 @@ public class MtgSlackbot {
         ? 8080
         : Integer.valueOf(System.getenv("PORT"));
     String tokens = System.getenv("tokens");
-    int keepaliveMs = System.getenv("keepalive") == null
-        ? 0
-        : Integer.valueOf(System.getenv("keepalive")) * 60 * 1000;
+    Duration keepalive = System.getenv("keepalive") == null
+        ? Duration.ZERO
+        : Duration.ofMillis(Integer.valueOf(System.getenv("keepalive")) * 60 * 1000);
     String appname = System.getenv("appname") == null
         ? null
         : "http://" + System.getenv("appname") + ".herokuapp.com/keepalive";
 
-    new MtgSlackbot(serverPort, tokens, keepaliveMs, appname).start();
+    new MtgSlackbot(serverPort, tokens, keepalive, appname).start();
   }
 }

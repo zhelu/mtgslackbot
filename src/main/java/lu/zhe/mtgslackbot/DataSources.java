@@ -13,9 +13,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -26,6 +30,7 @@ import java.util.function.Consumer;
 public class DataSources {
   @SuppressWarnings("unused") // May be used later for generating random messages.
   private static final SecureRandom random = new SecureRandom();
+  private static final Duration DURATION = Duration.ofMillis(2250);
   private final ListeningExecutorService executor =
       MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
@@ -34,7 +39,7 @@ public class DataSources {
           "q=cmc%%3A%d%%20t%%3Acreature+-is%%3Afunny+-is%%3Aextra";
   private static final String EQUIPMENT_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
-          "q=cmc<%d%%20t%%3Aequipment+-is%%3Afunny+-is%%3Aextra";
+          "q=cmc%%3C%d%%20t%%3Aequipment+-is%%3Afunny+-is%%3Aextra";
   private static final String INSTANT_SORCERY_FORMAT_STRING =
       "https://api.scryfall.com/cards/random?" +
           "q=t%%3A%s+-is%%3Afunny+-is%%3Aextra";
@@ -82,18 +87,18 @@ public class DataSources {
   }
 
   /** Get the display json for the parsed input. */
-  JSONObject processInput(ParsedInput input, Consumer<String> responseHook) {
+  String processInput(ParsedInput input, Consumer<String> responseHook) {
     String arg = input.arg();
     switch (input.command()) {
       case TEST: {
         return newTopJsonObj().put("text",
-            "The test command is currently not bound to any feature.");
+            "The test command is currently not bound to any feature.").toString();
       }
       case JHOIRA: {
         String type = Ascii.toLowerCase(arg);
         if (!type.equals("instant") && !type.equals("sorcery")) {
           return newTopJsonObj().put("text",
-              "argument must be either instant or sorcery, but got \"" + type + "\"");
+              "argument must be either instant or sorcery, but got \"" + type + "\"").toString();
         }
         List<ListenableFuture<String>> futures = new ArrayList<>();
         for (int i = 0; i < 3; ++i) {
@@ -116,31 +121,24 @@ public class DataSources {
           }));
         }
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
-        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
-          @Override
-          public void onSuccess(List<String> strings) {
-            JSONObject response = newTopJsonObj();
-            for (String s : strings) {
-              getShortDisplayJson(new JSONObject(s), response);
-            }
-            responseHook.accept(response.toString());
+        ListenableFuture future = Futures.transform(liftedFuture, (List<String> strings) -> {
+          JSONObject response = newTopJsonObj();
+          for (String s : strings) {
+            getShortDisplayJson(new JSONObject(s), response);
           }
-
-          public void onFailure(Throwable t) {
-            responseHook.accept(newTopJsonObj().put("text", "error").toString());
-          }
+          return response.toString();
         });
-        return newTopJsonObj().put("text", "Randomizing...");
+        return maybeRespond("reticulating splines", future, DURATION, responseHook);
       }
       case MOJOS: {
         int cmc;
         try {
           cmc = Integer.parseInt(arg);
           if (cmc <= 0) {
-            return newTopJsonObj().put("text", "argument must be a positive integer");
+            return newTopJsonObj().put("text", "argument must be a positive integer").toString();
           }
         } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "argument must be a positive integer");
+          return newTopJsonObj().put("text", "argument must be a positive integer").toString();
         }
         List<ListenableFuture<String>> futures = new ArrayList<>();
         futures.add(executor.submit(() -> {
@@ -178,36 +176,30 @@ public class DataSources {
           }
         }));
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
-        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
-          @Override
-          public void onSuccess(List<String> strings) {
-            JSONObject response = newTopJsonObj();
-            for (String s : strings) {
-              if (s == null) {
-                responseHook.accept(
-                    newTopJsonObj().put("text", "Unable to generate a random creature").toString());
-                return;
-              }
-              getShortDisplayJson(new JSONObject(s), response);
-            }
-            responseHook.accept(response.toString());
-          }
+        ListenableFuture<String> future =
+            Futures.transform(liftedFuture, (List<String> strings) -> {
+              JSONObject response = newTopJsonObj();
+              for (String s : strings) {
+                if (s == null) {
+                  return newTopJsonObj().put("text",
+                      "Unable to generate a random creature").toString();
 
-          public void onFailure(Throwable t) {
-            responseHook.accept(newTopJsonObj().put("text", "error").toString());
-          }
-        });
-        return newTopJsonObj().put("text", "Randomizing...");
+                }
+                getShortDisplayJson(new JSONObject(s), response);
+              }
+              return response.toString();
+            });
+        return maybeRespond("reticulating splines", future, DURATION, responseHook);
       }
       case MOMIR: {
         int cmc;
         try {
           cmc = Integer.parseInt(arg);
           if (cmc <= 0) {
-            return newTopJsonObj().put("text", "argument must be a positive integer");
+            return newTopJsonObj().put("text", "argument must be a positive integer").toString();
           }
         } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "argument must be a positive integer");
+          return newTopJsonObj().put("text", "argument must be a positive integer").toString();
         }
         ListenableFuture<String> future = executor.submit(() -> {
           try {
@@ -227,17 +219,7 @@ public class DataSources {
             return newTopJsonObj().put("text", "error").toString();
           }
         });
-        Futures.addCallback(future, new FutureCallback<String>() {
-          @Override
-          public void onSuccess(String response) {
-            responseHook.accept(response);
-          }
-
-          public void onFailure(Throwable t) {
-            responseHook.accept(newTopJsonObj().put("text", "error").toString());
-          }
-        });
-        return newTopJsonObj().put("text", "Randomizing...");
+        return maybeRespond("reticulating splines", future, DURATION, responseHook);
       }
       case HELP:
         switch (arg) {
@@ -248,13 +230,15 @@ public class DataSources {
             }
             return newTopJsonObj().put(
                 "text", "/mtg <command>\ncommands are: " + commands.toString().trim()).put("mrkdwn",
-                false);
+                false).toString();
           case "card":
-            return newTopJsonObj().put("text", "/mtg card <name>").put("mrkdwn", false);
+            return newTopJsonObj().put("text", "/mtg card <name>").put("mrkdwn", false).toString();
           case "ruling":
-            return newTopJsonObj().put("text", "/mtg ruling <name>").put("mrkdwn", false);
+            return newTopJsonObj().put("text", "/mtg ruling <name>").put("mrkdwn",
+                false).toString();
           case "set":
-            return newTopJsonObj().put("text", "/mtg set <set abbreviation>").put("mrkdwn", false);
+            return newTopJsonObj().put("text", "/mtg set <set abbreviation>").put("mrkdwn",
+                false).toString();
           case "search":
             // fall through intended
           case "count":
@@ -263,13 +247,14 @@ public class DataSources {
             return newTopJsonObj().put("text",
                 "/mtg {search|count|random} <predicate 1> ...\n"
                     + "predicates:\n"
-                    + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is s").put("mrkdwn", false);
+                    + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is s").put("mrkdwn",
+                false).toString();
         }
-        return newTopJsonObj().put("text", "not implemented").put("mrkdwn", false);
+        return newTopJsonObj().put("text", "not implemented").put("mrkdwn", false).toString();
       case RULE:
-        return getGlossaryOrRuleEntry(arg);
+        return getGlossaryOrRuleEntry(arg).toString();
       default:
-        return newTopJsonObj().put("text", "not implemented");
+        return newTopJsonObj().put("text", "not implemented").toString();
     }
   }
 
@@ -429,5 +414,36 @@ public class DataSources {
         return "#00AA00";
     }
     throw new IllegalStateException("unknown color information");
+  }
+
+  /**
+   * Waits for the Future for the specified amount of time.
+   *
+   * <p>If the future completes, return the value future.
+   *
+   * <p>If the future times out, then register the listener and return a placeholder message.
+   */
+  private static String maybeRespond(String placeHolder, ListenableFuture<String> future,
+                                     Duration timeout, Consumer<String> responseHook) {
+    try {
+      return future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+    } catch (InterruptedException | ExecutionException e) {
+      return newTopJsonObj().put("text", "Internal server exception").toString();
+    } catch (TimeoutException e) {
+      Futures.addCallback(future, new FutureCallback<String>() {
+        @Override
+        public void onSuccess(String s) {
+          Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+          responseHook.accept(s);
+        }
+
+        @Override
+        public void onFailure(Throwable throwable) {
+          Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+          responseHook.accept(newTopJsonObj().put("text", "Internal server exception").toString());
+        }
+      });
+      return newTopJsonObj().put("text", placeHolder).toString();
+    }
   }
 }
