@@ -2,7 +2,12 @@ package lu.zhe.mtgslackbot;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.Joiner;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Uninterruptibles;
 import lu.zhe.mtgslackbot.parsing.Parsing.Command;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 import lu.zhe.mtgslackbot.shared.Utils;
