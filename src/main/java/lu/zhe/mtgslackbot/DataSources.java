@@ -7,7 +7,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Uninterruptibles;
 import lu.zhe.mtgslackbot.parsing.Parsing.Command;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 import lu.zhe.mtgslackbot.shared.Utils;
@@ -438,13 +437,21 @@ public class DataSources {
       Futures.addCallback(future, new FutureCallback<String>() {
         @Override
         public void onSuccess(String s) {
-          Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+          try {
+            Thread.sleep(150);
+          } catch (Exception e) {
+            // Do nothing
+          }
           responseHook.accept(s);
         }
 
         @Override
         public void onFailure(Throwable throwable) {
-          Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+          try {
+            Thread.sleep(150);
+          } catch (Exception e) {
+            // Do nothing
+          }
           responseHook.accept(newTopJsonObj().put("text", "Internal server exception").toString());
         }
       });
