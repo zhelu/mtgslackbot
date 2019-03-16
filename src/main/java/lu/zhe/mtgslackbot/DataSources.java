@@ -185,7 +185,7 @@ public class DataSources {
               Scanner sc = new Scanner(
                   new URL(String.format(
                       EQUIPMENT_FORMAT_STRING,
-                      cmc - 1)).openStream(),
+                      cmc)).openStream(),
                   "UTF-8");
               StringBuilder result = new StringBuilder();
               while (sc.hasNextLine()) {
