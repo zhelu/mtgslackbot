@@ -2,6 +2,7 @@ package lu.zhe.mtgslackbot;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.*;
 import lu.zhe.mtgslackbot.parsing.Parsing.Command;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
@@ -119,21 +120,27 @@ public class DataSources {
           }));
         }
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
-        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
-          @Override
-          public void onSuccess(List<String> strings) {
-            JSONObject response = newTopJsonObj();
-            for (String s : strings) {
-              getShortDisplayJson(new JSONObject(s), response);
+        try {
+          List<String> strings = liftedFuture.get(2250, TimeUnit.MILLISECONDS);
+          return processListResponse(strings);
+        } catch (InterruptedException | ExecutionException e) {
+          return newTopJsonObj().put("text", "Internal server error");
+        } catch (TimeoutException e) {
+          Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
+            @Override
+            public void onSuccess(List<String> strings) {
+              JSONObject response = processListResponse(strings);
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(response.toString());
             }
-            responseHook.accept(response.toString());
-          }
 
-          public void onFailure(Throwable t) {
-            responseHook.accept(newTopJsonObj().put("text", "error").toString());
-          }
-        });
-        return newTopJsonObj().put("text", "Randomizing...");
+            public void onFailure(Throwable t) {
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(newTopJsonObj().put("text", "error").toString());
+            }
+          });
+          return newTopJsonObj().put("text", "Randomizing...");
+        }
       }
       case MOJOS: {
         int cmc;
@@ -185,14 +192,14 @@ public class DataSources {
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
         try {
           List<String> strings = liftedFuture.get(2250, TimeUnit.MILLISECONDS);
-          return processMojosResponse(strings);
+          return processListResponse(strings);
         } catch (InterruptedException | ExecutionException e) {
           return newTopJsonObj().put("text", "Internal server error");
         } catch (TimeoutException e) {
           Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
             @Override
             public void onSuccess(List<String> strings) {
-              JSONObject response = processMojosResponse(strings);
+              JSONObject response = processListResponse(strings);
               Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
               responseHook.accept(response.toString());
             }
@@ -226,24 +233,33 @@ public class DataSources {
             while (sc.hasNextLine()) {
               result.append(sc.nextLine());
             }
-            return
-                getShortDisplayJson(new JSONObject(result.toString()), newTopJsonObj());
+            return result.toString();
           } catch (Exception e) {
             e.printStackTrace();
             return newTopJsonObj().put("text", "error").toString();
           }
         });
-        Futures.addCallback(future, new FutureCallback<String>() {
-          @Override
-          public void onSuccess(String response) {
-            responseHook.accept(response);
-          }
+        try {
+          String string = future.get(2250, TimeUnit.MILLISECONDS);
+          return processListResponse(ImmutableList.of(string));
+        } catch (InterruptedException | ExecutionException e) {
+          return newTopJsonObj().put("text", "Internal server error");
+        } catch (TimeoutException e) {
+          Futures.addCallback(future, new FutureCallback<String>() {
+            @Override
+            public void onSuccess(String string) {
+              JSONObject response = processListResponse(ImmutableList.of(string));
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(response.toString());
+            }
 
-          public void onFailure(Throwable t) {
-            responseHook.accept(newTopJsonObj().put("text", "error").toString());
-          }
-        });
-        return newTopJsonObj().put("text", "Randomizing...");
+            public void onFailure(Throwable t) {
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(newTopJsonObj().put("text", "error").toString());
+            }
+          });
+          return newTopJsonObj().put("text", "Randomizing...");
+        }
       }
       case HELP:
         switch (arg) {
@@ -437,7 +453,7 @@ public class DataSources {
     throw new IllegalStateException("unknown color information");
   }
 
-  private JSONObject processMojosResponse(List<String> strings) {
+  private JSONObject processListResponse(List<String> strings) {
     JSONObject response = newTopJsonObj();
     for (String s : strings) {
       if (s == null) {
