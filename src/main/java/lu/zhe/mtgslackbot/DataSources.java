@@ -136,7 +136,7 @@ public class DataSources {
         int cmc;
         try {
           cmc = Integer.parseInt(arg);
-          if (cmc <= 0) {
+          if (cmc < 0) {
             return newTopJsonObj().put("text", "argument must be a positive integer");
           }
         } catch (NumberFormatException e) {
@@ -160,23 +160,25 @@ public class DataSources {
             return null;
           }
         }));
-        futures.add(executor.submit(() -> {
-          try {
-            Scanner sc = new Scanner(
-                new URL(String.format(
-                    EQUIPMENT_FORMAT_STRING,
-                    cmc - 1)).openStream(),
-                "UTF-8");
-            StringBuilder result = new StringBuilder();
-            while (sc.hasNextLine()) {
-              result.append(sc.nextLine());
+        if (cmc > 0) {
+          futures.add(executor.submit(() -> {
+            try {
+              Scanner sc = new Scanner(
+                  new URL(String.format(
+                      EQUIPMENT_FORMAT_STRING,
+                      cmc - 1)).openStream(),
+                  "UTF-8");
+              StringBuilder result = new StringBuilder();
+              while (sc.hasNextLine()) {
+                result.append(sc.nextLine());
+              }
+              return result.toString();
+            } catch (Exception e) {
+              e.printStackTrace();
+              return null;
             }
-            return result.toString();
-          } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-          }
-        }));
+          }));
+        }
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
         Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
           @Override
