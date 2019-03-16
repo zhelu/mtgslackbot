@@ -13,7 +13,7 @@ java_library(
     name = "mtgslackbot",
     srcs = ["MtgSlackbot.java"],
     deps = [
-        "//src/main/java/lu/zhe/mtgslackbot:data_sources",
+        "//src/main/java/lu/zhe/mtgslackbot:datasources",
         "//src/main/java/lu/zhe/mtgslackbot/parsing",
         "@commons_logging//jar",
         "@com_sparkjava_spark_2_2//jar",
@@ -24,7 +24,7 @@ java_library(
 )
 
 java_library(
-    name = "data_sources",
+    name = "datasources",
     srcs = ["DataSources.java"],
     deps = [
         "//src/main/java/lu/zhe/mtgslackbot/parsing:parsing",
@@ -47,7 +47,7 @@ java_library(
     name = "tester",
     srcs = ["Tester.java"],
     deps = [
-        ":data_sources",
+        ":datasources",
         "//src/main/java/lu/zhe/mtgslackbot/parsing:parsing",
         "@com_google_guava_guava//jar",
     ],
