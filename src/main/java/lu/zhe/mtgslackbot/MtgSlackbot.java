@@ -10,7 +10,11 @@ import org.apache.http.impl.client.HttpClients;
 import java.net.URL;
 import java.net.URLConnection;
 import java.time.Duration;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Consumer;
 
 import static spark.Spark.get;
@@ -75,7 +79,7 @@ public class MtgSlackbot {
         client.close();
       } catch (Exception e) {
         // Nothing to do
-        System.out.println(e);
+        e.printStackTrace();
       }
     };
   }
@@ -112,7 +116,7 @@ public class MtgSlackbot {
       ParsedInput parsedInput = Parsing.getParsedInput(input);
       return dataSources.processInput(
           parsedInput,
-          responseHook).toString();
+          responseHook);
     } catch (Exception e) {
       return e.getMessage();
     }
