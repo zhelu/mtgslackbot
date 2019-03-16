@@ -15,7 +15,10 @@ import java.net.URL;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -180,26 +183,27 @@ public class DataSources {
           }));
         }
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
-        Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
-          @Override
-          public void onSuccess(List<String> strings) {
-            JSONObject response = newTopJsonObj();
-            for (String s : strings) {
-              if (s == null) {
-                responseHook.accept(
-                    newTopJsonObj().put("text", "Unable to generate a random creature").toString());
-                return;
-              }
-              getShortDisplayJson(new JSONObject(s), response);
+        try {
+          List<String> strings = liftedFuture.get(2250, TimeUnit.MILLISECONDS);
+          return processMojosResponse(strings);
+        } catch (InterruptedException | ExecutionException e) {
+          return newTopJsonObj().put("text", "Internal server error");
+        } catch (TimeoutException e) {
+          Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
+            @Override
+            public void onSuccess(List<String> strings) {
+              JSONObject response = processMojosResponse(strings);
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(response.toString());
             }
-            responseHook.accept(response.toString());
-          }
 
-          public void onFailure(Throwable t) {
-            responseHook.accept(newTopJsonObj().put("text", "error").toString());
-          }
-        });
-        return newTopJsonObj().put("text", "Randomizing...");
+            public void onFailure(Throwable t) {
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(newTopJsonObj().put("text", "error").toString());
+            }
+          });
+          return newTopJsonObj().put("text", "Randomizing...");
+        }
       }
       case MOMIR: {
         int cmc;
@@ -431,5 +435,17 @@ public class DataSources {
         return "#00AA00";
     }
     throw new IllegalStateException("unknown color information");
+  }
+
+  private JSONObject processMojosResponse(List<String> strings) {
+    JSONObject response = newTopJsonObj();
+    for (String s : strings) {
+      if (s == null) {
+        return
+            newTopJsonObj().put("text", "Unable to generate a random creature");
+      }
+      getShortDisplayJson(new JSONObject(s), response);
+    }
+    return response;
   }
 }
