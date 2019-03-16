@@ -2,11 +2,8 @@ package lu.zhe.mtgslackbot;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.Joiner;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.*;
 import lu.zhe.mtgslackbot.parsing.Parsing.Command;
 import lu.zhe.mtgslackbot.parsing.Parsing.ParsedInput;
 import lu.zhe.mtgslackbot.shared.Utils;
@@ -17,13 +14,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -34,7 +27,6 @@ import java.util.function.Consumer;
 public class DataSources {
   @SuppressWarnings("unused") // May be used later for generating random messages.
   private static final SecureRandom random = new SecureRandom();
-  private static final Duration DURATION = Duration.ofMillis(2250);
   private final ListeningExecutorService executor =
       MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
@@ -91,18 +83,18 @@ public class DataSources {
   }
 
   /** Get the display json for the parsed input. */
-  String processInput(ParsedInput input, Consumer<String> responseHook) {
+  JSONObject processInput(ParsedInput input, Consumer<String> responseHook) {
     String arg = input.arg();
     switch (input.command()) {
       case TEST: {
         return newTopJsonObj().put("text",
-            "The test command is currently not bound to any feature.").toString();
+            "The test command is currently not bound to any feature.");
       }
       case JHOIRA: {
         String type = Ascii.toLowerCase(arg);
         if (!type.equals("instant") && !type.equals("sorcery")) {
           return newTopJsonObj().put("text",
-              "argument must be either instant or sorcery, but got \"" + type + "\"").toString();
+              "argument must be either instant or sorcery, but got \"" + type + "\"");
         }
         List<ListenableFuture<String>> futures = new ArrayList<>();
         for (int i = 0; i < 3; ++i) {
@@ -125,24 +117,37 @@ public class DataSources {
           }));
         }
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
-        ListenableFuture future = Futures.transform(liftedFuture, (List<String> strings) -> {
-          JSONObject response = newTopJsonObj();
-          for (String s : strings) {
-            getShortDisplayJson(new JSONObject(s), response);
-          }
-          return response.toString();
-        });
-        return maybeRespond("reticulating splines", future, DURATION, responseHook);
+        try {
+          List<String> strings = liftedFuture.get(2250, TimeUnit.MILLISECONDS);
+          return processListResponse(strings);
+        } catch (InterruptedException | ExecutionException e) {
+          return newTopJsonObj().put("text", "Internal server error");
+        } catch (TimeoutException e) {
+          Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
+            @Override
+            public void onSuccess(List<String> strings) {
+              JSONObject response = processListResponse(strings);
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(response.toString());
+            }
+
+            public void onFailure(Throwable t) {
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(newTopJsonObj().put("text", "error").toString());
+            }
+          });
+          return newTopJsonObj().put("text", "Randomizing...");
+        }
       }
       case MOJOS: {
         int cmc;
         try {
           cmc = Integer.parseInt(arg);
           if (cmc < 0) {
-            return newTopJsonObj().put("text", "argument must be a positive integer").toString();
+            return newTopJsonObj().put("text", "argument must be a positive integer");
           }
         } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "argument must be a positive integer").toString();
+          return newTopJsonObj().put("text", "argument must be a positive integer");
         }
         List<ListenableFuture<String>> futures = new ArrayList<>();
         futures.add(executor.submit(() -> {
@@ -182,30 +187,37 @@ public class DataSources {
           }));
         }
         ListenableFuture<List<String>> liftedFuture = Futures.allAsList(futures);
-        ListenableFuture<String> future =
-            Futures.transform(liftedFuture, (List<String> strings) -> {
-              JSONObject response = newTopJsonObj();
-              for (String s : strings) {
-                if (s == null) {
-                  return newTopJsonObj().put("text",
-                      "Unable to generate a random creature").toString();
+        try {
+          List<String> strings = liftedFuture.get(2250, TimeUnit.MILLISECONDS);
+          return processListResponse(strings);
+        } catch (InterruptedException | ExecutionException e) {
+          return newTopJsonObj().put("text", "Internal server error");
+        } catch (TimeoutException e) {
+          Futures.addCallback(liftedFuture, new FutureCallback<List<String>>() {
+            @Override
+            public void onSuccess(List<String> strings) {
+              JSONObject response = processListResponse(strings);
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(response.toString());
+            }
 
-                }
-                getShortDisplayJson(new JSONObject(s), response);
-              }
-              return response.toString();
-            });
-        return maybeRespond("reticulating splines", future, DURATION, responseHook);
+            public void onFailure(Throwable t) {
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(newTopJsonObj().put("text", "error").toString());
+            }
+          });
+          return newTopJsonObj().put("text", "Randomizing...");
+        }
       }
       case MOMIR: {
         int cmc;
         try {
           cmc = Integer.parseInt(arg);
           if (cmc <= 0) {
-            return newTopJsonObj().put("text", "argument must be a positive integer").toString();
+            return newTopJsonObj().put("text", "argument must be a positive integer");
           }
         } catch (NumberFormatException e) {
-          return newTopJsonObj().put("text", "argument must be a positive integer").toString();
+          return newTopJsonObj().put("text", "argument must be a positive integer");
         }
         ListenableFuture<String> future = executor.submit(() -> {
           try {
@@ -218,14 +230,33 @@ public class DataSources {
             while (sc.hasNextLine()) {
               result.append(sc.nextLine());
             }
-            return
-                getShortDisplayJson(new JSONObject(result.toString()), newTopJsonObj());
+            return result.toString();
           } catch (Exception e) {
             e.printStackTrace();
             return newTopJsonObj().put("text", "error").toString();
           }
         });
-        return maybeRespond("reticulating splines", future, DURATION, responseHook);
+        try {
+          String string = future.get(2250, TimeUnit.MILLISECONDS);
+          return processListResponse(ImmutableList.of(string));
+        } catch (InterruptedException | ExecutionException e) {
+          return newTopJsonObj().put("text", "Internal server error");
+        } catch (TimeoutException e) {
+          Futures.addCallback(future, new FutureCallback<String>() {
+            @Override
+            public void onSuccess(String string) {
+              JSONObject response = processListResponse(ImmutableList.of(string));
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(response.toString());
+            }
+
+            public void onFailure(Throwable t) {
+              Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
+              responseHook.accept(newTopJsonObj().put("text", "error").toString());
+            }
+          });
+          return newTopJsonObj().put("text", "Randomizing...");
+        }
       }
       case HELP:
         switch (arg) {
@@ -236,15 +267,13 @@ public class DataSources {
             }
             return newTopJsonObj().put(
                 "text", "/mtg <command>\ncommands are: " + commands.toString().trim()).put("mrkdwn",
-                false).toString();
+                false);
           case "card":
-            return newTopJsonObj().put("text", "/mtg card <name>").put("mrkdwn", false).toString();
+            return newTopJsonObj().put("text", "/mtg card <name>").put("mrkdwn", false);
           case "ruling":
-            return newTopJsonObj().put("text", "/mtg ruling <name>").put("mrkdwn",
-                false).toString();
+            return newTopJsonObj().put("text", "/mtg ruling <name>").put("mrkdwn", false);
           case "set":
-            return newTopJsonObj().put("text", "/mtg set <set abbreviation>").put("mrkdwn",
-                false).toString();
+            return newTopJsonObj().put("text", "/mtg set <set abbreviation>").put("mrkdwn", false);
           case "search":
             // fall through intended
           case "count":
@@ -253,14 +282,13 @@ public class DataSources {
             return newTopJsonObj().put("text",
                 "/mtg {search|count|random} <predicate 1> ...\n"
                     + "predicates:\n"
-                    + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is s").put("mrkdwn",
-                false).toString();
+                    + "text(~, !~) cmc,pow,tgh,loyalty(==, ~=,...) t c is s").put("mrkdwn", false);
         }
-        return newTopJsonObj().put("text", "not implemented").put("mrkdwn", false).toString();
+        return newTopJsonObj().put("text", "not implemented").put("mrkdwn", false);
       case RULE:
-        return getGlossaryOrRuleEntry(arg).toString();
+        return getGlossaryOrRuleEntry(arg);
       default:
-        return newTopJsonObj().put("text", "not implemented").toString();
+        return newTopJsonObj().put("text", "not implemented");
     }
   }
 
@@ -422,42 +450,15 @@ public class DataSources {
     throw new IllegalStateException("unknown color information");
   }
 
-  /**
-   * Waits for the Future for the specified amount of time.
-   *
-   * <p>If the future completes, return the value future.
-   *
-   * <p>If the future times out, then register the listener and return a placeholder message.
-   */
-  private static String maybeRespond(String placeHolder, ListenableFuture<String> future,
-                                     Duration timeout, Consumer<String> responseHook) {
-    try {
-      return future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-    } catch (InterruptedException | ExecutionException e) {
-      return newTopJsonObj().put("text", "Internal server exception").toString();
-    } catch (TimeoutException e) {
-      Futures.addCallback(future, new FutureCallback<String>() {
-        @Override
-        public void onSuccess(String s) {
-          try {
-            Thread.sleep(150);
-          } catch (Exception e) {
-            // Do nothing
-          }
-          responseHook.accept(s);
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-          try {
-            Thread.sleep(150);
-          } catch (Exception e) {
-            // Do nothing
-          }
-          responseHook.accept(newTopJsonObj().put("text", "Internal server exception").toString());
-        }
-      });
-      return newTopJsonObj().put("text", placeHolder).toString();
+  private JSONObject processListResponse(List<String> strings) {
+    JSONObject response = newTopJsonObj();
+    for (String s : strings) {
+      if (s == null) {
+        return
+            newTopJsonObj().put("text", "Unable to generate a random creature");
+      }
+      getShortDisplayJson(new JSONObject(s), response);
     }
+    return response;
   }
 }
