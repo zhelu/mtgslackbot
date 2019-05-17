@@ -404,12 +404,22 @@ public class DataSources {
     JSONObject side2 = sides.getJSONObject(1);
     builder.append(side1.getString("name")).append(" ").append(
         Utils.substituteSymbols(side1.getString("mana_cost"))).append(" || ").append(
-        side1.getString("type_line")).append("\n").append(Utils.substituteAbilityWords(
+        side1.getString("type_line"));
+    if (side1.has("power") && side1.has("toughness")) {
+      builder.append(" ").append(Utils.substituteAsterisk(side1.getString("power"))).append(
+          "/").append(Utils.substituteAsterisk(side1.getString("toughness")));
+    }
+    builder.append("\n").append(Utils.substituteAbilityWords(
         Utils.substituteSymbols(side1.getString("oracle_text")), abilityKeyWordsPattern)).append(
         "\n\nFLIPS INTO:\n\n").append(
         side2.getString("name")).append(" ").append(
         Utils.substituteSymbols(side2.getString("mana_cost"))).append(" || ").append(
-        side2.getString("type_line")).append("\n").append(Utils.substituteAbilityWords(
+        side2.getString("type_line"));
+    if (side2.has("power") && side2.has("toughness")) {
+      builder.append(" ").append(Utils.substituteAsterisk(side2.getString("power"))).append(
+          "/").append(Utils.substituteAsterisk(side2.getString("toughness")));
+    }
+    builder.append("\n").append(Utils.substituteAbilityWords(
         Utils.substituteSymbols(side2.getString("oracle_text")), abilityKeyWordsPattern));
 
     addAttachment(response,
