@@ -75,6 +75,6 @@ public class Utils {
   }
 
   public static String substituteAsterisk(String text) {
-    return text.replaceAll("\\*", "\u2217");
+    return text.replaceAll("\\*", " * ");
   }
 }
